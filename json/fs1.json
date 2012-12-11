@@ -1,18 +1,22 @@
-[
-   {
-      "name": "file1",
-      "type": "text",
-      "contents": "Hello World!"
-   },
-   {
-      "name": "dir1",
-      "type": "dir",
-      "contents": [
-         {
-            "name": "file2",
-            "type": "text",
-            "contents": "foo"
-         }
-      ]
-   }
-]
+{
+   "name": "~",
+   "type": "dir",
+   "contents": [
+      {
+         "name": "file1",
+         "type": "text",
+         "contents": "Hello World!"
+      },
+      {
+         "name": "dir1",
+         "type": "dir",
+         "contents": [
+            {
+               "name": "file2",
+               "type": "text",
+               "contents": "foo"
+            }
+         ]
+      }
+   ]
+}
