@@ -21,12 +21,11 @@
       },
 
       LoadFS: function(name, cb) {
-         var that = this;
          _Ajax(name, function(responseText) {
-            that.fs = JSON.parse(responseText);
-            that._AddDirs(that.fs, that.fs);
+            this.fs = JSON.parse(responseText);
+            this._AddDirs(this.fs, this.fs);
             if (cb) cb();
-         });
+         }.bind(this));
       },
 
       LoadCommands: function(commands) {
@@ -44,13 +43,12 @@
          this.div.classList.add('jsterm');
          parentElement.appendChild(this.div);
 
-         var that = this;
          window.onkeydown = function(e) {
-            that._HandleSpecialKey((e.which) ? e.which : e.keyCode);
-         }
+            this._HandleSpecialKey((e.which) ? e.which : e.keyCode);
+         }.bind(this);
          window.onkeypress = function(e) {
-            that._TypeKey((e.which) ? e.which : e.keyCode);
-         }
+            this._TypeKey((e.which) ? e.which : e.keyCode);
+         }.bind(this);
 
          this.cwd = this.fs.contents[1];
          this._Prompt();
@@ -59,10 +57,9 @@
       GetCWD: function() {
          var dir = this.cwd;
          var dirStr = '';
-         var that = this;
          while (this._DirNamed('..', dir.contents).contents !== dir.contents) {
             dirStr = '/' + dir.name + dirStr;
-            dir = that._DirNamed('..', dir.contents);
+            dir = this._DirNamed('..', dir.contents);
          }
          return '~' + dirStr;
       },
@@ -106,11 +103,10 @@
       },
 
       _AddDirs: function(curDir, parentDir) {
-         var that = this;
          curDir.contents.forEach(function(entry, i, dir) {
             if (entry.type == 'dir')
-               that._AddDirs(entry, curDir);
-         });
+               this._AddDirs(entry, curDir);
+         }.bind(this));
          curDir.contents.push({
             'name': '.',
             'type': 'link',
