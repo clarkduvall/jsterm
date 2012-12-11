@@ -1,22 +1,24 @@
 (function() {
+   function Ajax(name, callback) {
+      var ajax = new XMLHttpRequest();
+      ajax.onreadystatechange = function() {
+         if (ajax.readyState == 4 && ajax.status == 200)
+            callback(ajax.responseText);
+      };
+      ajax.open('GET', name);
+      ajax.send();
+   };
+
    var Terminal = {
-      LoadFS: function(name, callback) {
-         var ajax = new XMLHttpRequest();
+      LoadFS: function(name) {
          var that = this;
-         ajax.onreadystatechange = function() {
-            if (ajax.readyState == 4 && ajax.status == 200) {
-               that.fs = JSON.parse(ajax.responseText);
-               callback();
-            }
-         };
-         ajax.open('GET', name);
-         ajax.send();
+         Ajax(name, function(responseText) {
+            that.fs = JSON.parse(responseText);
+         });
       },
       fs: null
    };
 
    var term = Object.create(Terminal);
-   term.LoadFS('http://localhost:8000/json/fs1.json', function() {
-      console.log(term.fs);
-   });
+   term.LoadFS('/json/fs1.json');
 })();
