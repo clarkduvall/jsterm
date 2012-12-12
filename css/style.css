@@ -1,0 +1,20 @@
+body {
+   background: black;
+}
+
+.jsterm {
+   background: black;
+   font-family: monospace;
+   font-size: 16px;
+   color: #E0E0E0;
+}
+
+.user {
+   color: #73E234;
+   font-weight: bold;
+}
+
+.dir {
+   color: #729FBD;
+   font-weight: bold;
+}

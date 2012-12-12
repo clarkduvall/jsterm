@@ -1,40 +1,43 @@
 var COMMANDS = COMMANDS || {};
 
 COMMANDS.cat =  function(argv, cb) {
-   var entry = this.terminal.GetEntry(argv[0]);
+   var entry = this._terminal.GetEntry(argv[0]);
    if (!entry)
-      this.terminal.Write('File does not exist!');
+      this._terminal.Write('File does not exist!');
    else if (entry.type == 'dir')
-      this.terminal.Write('cat: ' + argv[0] + ': Is a directory.');
+      this._terminal.Write('cat: ' + argv[0] + ': Is a directory.');
    else
-      this.terminal.Write(entry.contents);
+      this._terminal.Write(entry.contents);
    cb();
 }
 
 COMMANDS.cd = function(argv, cb) {
-   var entry = this.terminal.GetEntry(argv[0]);
+   var entry = this._terminal.GetEntry(argv[0]);
    if (!entry)
-      this.terminal.Write('bash: cd: ' + argv[0] + ': No such file or directory');
+      this._terminal.Write('bash: cd: ' + argv[0] + ': No such file or directory');
    else if (entry.type != 'dir')
-      this.terminal.Write('bash: cd: ' + argv[0] + ': Not a directory.');
+      this._terminal.Write('bash: cd: ' + argv[0] + ': Not a directory.');
    else
-      this.terminal.cwd = entry;
+      this._terminal.cwd = entry;
    cb();
 }
 
 COMMANDS.ls = function(argv, cb) {
    if (!argv.length) {
-      for (i in this.terminal.cwd.contents) {
-         if (this.terminal.cwd.contents[i].name[0] != '.')
-            this.terminal.Write(this.terminal.cwd.contents[i].name + ' ');
+      for (i in this._terminal.cwd.contents) {
+         var cur = this._terminal.cwd.contents[i];
+         if (cur.name[0] != '.')
+            this._terminal.Write('<div class="' + cur.type + '">' + cur.name + '</div>');
       }
    } else {
-      var entry = this.terminal.GetEntry(argv[0]);
+      var entry = this._terminal.GetEntry(argv[0]);
       if (!entry)
-         this.terminal.Write('ls: cannot access ' + argv[0] + ': No such file or directory');
+         this._terminal.Write('ls: cannot access ' + argv[0] + ': No such file or directory');
       for (i in entry.contents) {
-         if (entry.contents[i].name[0] != '.')
-            this.terminal.Write(entry.contents[i].name + ' ');
+         if (entry.contents[i].name[0] != '.') {
+            this._terminal.Write('<div class="' + entry.contents[i].type +
+                '">' + entry.contents[i].name + '</div>');
+         }
       }
    }
    cb();
