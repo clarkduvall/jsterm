@@ -1,6 +1,6 @@
 var COMMANDS = COMMANDS || {};
 
-COMMANDS.cat =  function(argv) {
+COMMANDS.cat =  function(argv, cb) {
    var entry = this.terminal.GetEntry(argv[0]);
    if (!entry)
       this.terminal.Write('File does not exist!');
@@ -8,9 +8,10 @@ COMMANDS.cat =  function(argv) {
       this.terminal.Write('cat: ' + argv[0] + ': Is a directory.');
    else
       this.terminal.Write(entry.contents);
+   cb();
 }
 
-COMMANDS.cd = function(argv) {
+COMMANDS.cd = function(argv, cb) {
    var entry = this.terminal.GetEntry(argv[0]);
    if (!entry)
       this.terminal.Write('bash: cd: ' + argv[0] + ': No such file or directory');
@@ -18,9 +19,10 @@ COMMANDS.cd = function(argv) {
       this.terminal.Write('bash: cd: ' + argv[0] + ': Not a directory.');
    else
       this.terminal.cwd = entry;
+   cb();
 }
 
-COMMANDS.ls = function(argv) {
+COMMANDS.ls = function(argv, cb) {
    if (!argv.length) {
       for (i in this.terminal.cwd.contents) {
          if (this.terminal.cwd.contents[i].name[0] != '.')
@@ -35,4 +37,5 @@ COMMANDS.ls = function(argv) {
             this.terminal.Write(entry.contents[i].name + ' ');
       }
    }
+   cb();
 }

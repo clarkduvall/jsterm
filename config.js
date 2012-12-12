@@ -1,3 +1,5 @@
 var CONFIG = CONFIG || {};
 
-CONFIG.prompt = 'linux'
+CONFIG.prompt = function(cwd) {
+  return 'linux:' + cwd + '$ ';
+};

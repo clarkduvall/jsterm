@@ -84,7 +84,7 @@
       },
 
       Write: function(text) {
-         var output = this.div.querySelector('#output');
+         var output = this.div.querySelector('#stdout');
          if (!output)
             return;
          output.innerHTML += text;
@@ -133,23 +133,18 @@
          var prompt = document.createElement('span');
          prompt.classList.add('prompt');
          prompt.id = 'current_Prompt';
-         prompt.innerHTML = this.config.prompt + ':' + this.GetCWD() + '$ ';
+         prompt.innerHTML = this.config.prompt(this.GetCWD());
          div.appendChild(prompt);
 
-         this._ResetID('#currentCommand');
+         this._ResetID('#stdout');
          var command = document.createElement('span');
          command.classList.add('command');
-         command.id = 'currentCommand';
+         command.id = 'stdout';
          div.appendChild(command);
-
-         this._ResetID('#output');
-         var output = document.createElement('div');
-         output.id = 'output';
-         this.div.appendChild(output);
       },
 
       _TypeKey: function(key) {
-         var command = this.div.querySelector('#currentCommand');
+         var command = this.div.querySelector('#stdout');
          if (!command || key < 0x20 || key > 0x7E || key == 13 || key == 9)
             return;
          var letter = String.fromCharCode(key);
@@ -157,7 +152,7 @@
       },
 
       _HandleSpecialKey: function(key) {
-         var command = this.div.querySelector('#currentCommand');
+         var command = this.div.querySelector('#stdout');
          if (!command)
             return;
          if (key == 8 || key == 46)
@@ -166,15 +161,26 @@
             this._Execute(command.innerHTML);
       },
 
-      _Execute: function(command) {
-         var parts = command.split(' ');
-         if (parts[0].length) {
-            if (!(parts[0] in this.commands))
-               this.Write('Command not found!');
-            else
-               this.commands[parts[0]](parts.slice(1, parts.length));
+      _Execute: function(fullCommand) {
+         this._ResetID('#stdout');
+         var output = document.createElement('div');
+         output.id = 'stdout';
+         this.div.appendChild(output);
+
+         var parts = fullCommand.split(' ');
+         var command = parts[0];
+         var args = parts.slice(1, parts.length);
+         if (command.length) {
+            if (!(command in this.commands)) {
+               this.Write(command + ': command not found');
+               this._Prompt();
+            } else {
+               // TODO: Do some magic.
+               this.commands[command](args, function() {
+                 this._Prompt()
+               }.bind(this));
+            }
          }
-         this._Prompt();
       },
 
       fs: null,
