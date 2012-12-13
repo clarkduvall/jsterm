@@ -56,6 +56,7 @@
          this.ReturnHandler = this._Execute;
          this.cwd = this.fs.contents[1];
          this._Prompt();
+         this._ToggleBlinker(600);
       },
 
       GetCWD: function() {
@@ -111,7 +112,7 @@
       },
 
       TabComplete: function(text) {
-         var parts = text.split(' ').filter(function(x) {return x;});
+         var parts = text.replace(/^\s+/, '').split(' ');
          if (!parts.length)
             return [];
          var matches = [];
@@ -120,7 +121,7 @@
                // Private member.
                if (c[0] == '_')
                   continue;
-               if (c.startswith(parts[0]))
+               if (c.startswith(parts[0]) && c != parts[0])
                   matches.push(c);
             }
          } else {
@@ -132,7 +133,7 @@
             var names = this._GetNamesInDir(dir);
             for (var i in names) {
                var n = names[i];
-               if (n.startswith(pathParts[pathParts.length - 1]))
+               if (n.startswith(pathParts[pathParts.length - 1]) && !n.startswith('.'))
                   matches.push(n);
             }
          }
@@ -177,6 +178,24 @@
          });
       },
 
+      _ToggleBlinker: function(timeout) {
+         var blinker = this.div.querySelector('#blinker');
+         if (blinker) {
+            blinker.parentNode.removeChild(blinker);
+         } else {
+            var stdout = this.div.querySelector('#stdout');
+            blinker = document.createElement('span');
+            blinker.id = 'blinker';
+            blinker.innerHTML = '&#x2588';
+            stdout.parentNode.appendChild(blinker);
+         }
+         if (timeout) {
+            setTimeout(function() {
+               this._ToggleBlinker(timeout);
+            }.bind(this), timeout);
+         }
+      },
+
       _ResetID: function(query) {
          var element = this.div.querySelector(query);
          if (element)
@@ -184,13 +203,13 @@
       },
 
       _Prompt: function() {
-         this._ResetID('#current_Prompt');
+         this._ResetID('#currentPrompt');
          var div = document.createElement('div');
          this.div.appendChild(div);
 
          var prompt = document.createElement('span');
          prompt.classList.add('prompt');
-         prompt.id = 'current_Prompt';
+         prompt.id = 'currentPrompt';
          prompt.innerHTML = this.config.prompt(this.GetCWD());
          div.appendChild(prompt);
 
@@ -199,6 +218,7 @@
          command.classList.add('command');
          command.id = 'stdout';
          div.appendChild(command);
+         this._ToggleBlinker(0);
       },
 
       _TypeKey: function(key) {
