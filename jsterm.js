@@ -11,6 +11,7 @@
 
    var Terminal = {
       Init: function(config, fs, commands, cb) {
+         this._queue = [];
          this.LoadConfig(config);
          if (commands)
             this.LoadCommands(commands);
@@ -57,6 +58,7 @@
          this.cwd = this.fs.contents[1];
          this._Prompt();
          this._ToggleBlinker(600);
+         this._Dequeue();
       },
 
       GetCWD: function() {
@@ -97,11 +99,12 @@
          this.ReturnHandler = this._Execute;
       },
 
-      TypeCommand: function(command) {
+      TypeCommand: function(command, cb) {
          var that = this;
          (function type(i) {
             if (i == command.length) {
                that._HandleSpecialKey(13);
+               if (cb) cb();
             } else {
                that._TypeKey(command.charCodeAt(i));
                setTimeout(function() {
@@ -127,26 +130,33 @@
          } else {
             var fullPath = parts[parts.length - 1];
             var pathParts = fullPath.split('/').filter(function(x) {return x;});
-            var dir = (pathParts.length > 1) ? this.GetEntry(pathParts[0]) : this.cwd;
+            var last = pathParts.pop();
+            var dir = (pathParts.length > 0) ? this.GetEntry(pathParts.join('/')) : this.cwd;
             if (!dir)
                return [];
-            var names = this._GetNamesInDir(dir);
-            for (var i in names) {
-               var n = names[i];
-               if (n.startswith(pathParts[pathParts.length - 1]) && !n.startswith('.'))
-                  matches.push(n);
+            for (var i in dir.contents) {
+               var n = dir.contents[i].name;
+               if (n.startswith(last) && !n.startswith('.') && n != last) {
+                  if (dir.contents[i].type == 'dir')
+                     matches.push(n + '/');
+                  else
+                     matches.push(n);
+               }
             }
          }
          return matches;
       },
 
-      _GetNamesInDir: function(dir) {
-         if (dir.type != 'dir')
-            return [];
-         var names = [];
-         for (i in dir.contents)
-            names.push(dir.contents[i].name);
-         return names;
+      Enqueue: function(command) {
+         this._queue.push(command);
+      },
+
+      _Dequeue: function() {
+         if (!this._queue.length)
+            return;
+         this.TypeCommand(this._queue.shift(), function() {
+            this._Dequeue()
+         }.bind(this));
       },
 
       _DirNamed: function(name, dir) {
@@ -271,11 +281,7 @@
             this._Prompt()
          }
          this.DefaultReturnHandler();
-      },
-
-      ReturnHandler: null,
-      fs: null,
-      cwd: null
+      }
    };
 
    String.prototype.startswith = function(s) {
@@ -284,6 +290,9 @@
 
    var term = Object.create(Terminal);
    term.Init(CONFIG, '/json/fs1.json', COMMANDS, function() {
+      term.Enqueue('cat file2');
+      term.Enqueue('cd ..');
+      term.Enqueue('cat file1');
       term.Begin();
    });
 

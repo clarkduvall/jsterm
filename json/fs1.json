@@ -15,6 +15,17 @@
                "name": "file2",
                "type": "text",
                "contents": "foo"
+            },
+            {
+               "name": "poop",
+               "type": "dir",
+               "contents": [
+                  {
+                     "name": "file3",
+                     "type": "text",
+                     "contents": "blahblah"
+                  }
+               ]
             }
          ]
       }
