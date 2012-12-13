@@ -12,6 +12,8 @@
    var Terminal = {
       Init: function(config, fs, commands, cb) {
          this._queue = [];
+         this._history = [];
+         this._historyIndex = -1;
          this.LoadConfig(config);
          if (commands)
             this.LoadCommands(commands);
@@ -72,6 +74,7 @@
       },
 
       GetEntry: function(path) {
+         path = path.replace(/^\s+/, '').replace(/\s+$/, '');
          if (!path.length)
             return null;
          var entry = this.cwd;
@@ -120,16 +123,29 @@
             return [];
          var matches = [];
          if (parts.length == 1) {
+            // TODO: Combine with below.
+            var pathParts = parts[0].replace(/[\/]+/, '/').split('/');
+            var last = pathParts.pop();
+            var dir = (pathParts.length > 0) ? this.GetEntry(pathParts.join('/')) : this.cwd;
+            if (dir) {
+               for (var i in dir.contents) {
+                  var n = dir.contents[i].name;
+                  if (n.startswith(last) && !n.startswith('.') && n != last) {
+                     if (dir.contents[i].type == 'exec')
+                        matches.push(n + ' ');
+                  }
+               }
+            }
             for (var c in this.commands) {
                // Private member.
                if (c[0] == '_')
                   continue;
                if (c.startswith(parts[0]) && c != parts[0])
-                  matches.push(c);
+                  matches.push(c + ' ');
             }
          } else {
             var fullPath = parts[parts.length - 1];
-            var pathParts = fullPath.split('/').filter(function(x) {return x;});
+            var pathParts = fullPath.replace(/[\/]+/, '/').split('/');
             var last = pathParts.pop();
             var dir = (pathParts.length > 0) ? this.GetEntry(pathParts.join('/')) : this.cwd;
             if (!dir)
@@ -140,7 +156,7 @@
                   if (dir.contents[i].type == 'dir')
                      matches.push(n + '/');
                   else
-                     matches.push(n);
+                     matches.push(n + ' ');
                }
             }
          }
@@ -229,6 +245,7 @@
          command.id = 'stdout';
          div.appendChild(command);
          this._ToggleBlinker(0);
+         window.scrollTo(0, document.body.scrollHeight);
       },
 
       _TypeKey: function(key) {
@@ -243,11 +260,27 @@
          var stdout = this.div.querySelector('#stdout');
          if (!stdout)
             return;
+         // Backspace/delete.
          if (key == 8 || key == 46)
             stdout.innerHTML = stdout.innerHTML.replace(/.$/, '');
+         // Enter.
          else if (key == 13)
             this.ReturnHandler(stdout.innerHTML);
-         else if (key == 9) {
+         // Up arrow.
+         else if (key == 38) {
+            if (this._historyIndex < this._history.length - 1)
+               stdout.innerHTML = this._history[++this._historyIndex];
+         // Down arrow.
+         } else if (key == 40) {
+            if (this._historyIndex <= 0) {
+               if (this._historyIndex == 0)
+                  this._historyIndex--;
+               stdout.innerHTML = '';
+            }
+            else if (this._history.length)
+               stdout.innerHTML = this._history[--this._historyIndex];
+         // Tab.
+         } else if (key == 9) {
             matches = this.TabComplete(stdout.innerHTML);
             if (matches.length) {
                var parts = stdout.innerHTML.split(' ');
@@ -268,18 +301,25 @@
          var parts = fullCommand.split(' ').filter(function(x) {return x;});
          var command = parts[0];
          var args = parts.slice(1, parts.length);
+         var entry = this.GetEntry(fullCommand);
          if (command && command.length) {
-            if (!(command in this.commands)) {
-               this.Write(command + ': command not found');
-               this._Prompt();
-            } else {
+            if (command in this.commands) {
                this.commands[command](args, function() {
                   this._Prompt()
                }.bind(this));
+            } else if (entry && entry.type == 'exec') {
+               window.open(entry.url, '_blank');
+               this._Prompt();
+            } else {
+               this.Write(command + ': command not found');
+               this._Prompt();
             }
          } else {
             this._Prompt()
          }
+         if (fullCommand.length)
+            this._history.unshift(fullCommand);
+         this._historyIndex = -1;
          this.DefaultReturnHandler();
       }
    };

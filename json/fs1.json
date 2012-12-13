@@ -22,7 +22,8 @@
                "contents": [
                   {
                      "name": "file3",
-                     "type": "text",
+                     "type": "exec",
+                     "url": "http://google.com",
                      "contents": "blahblah"
                   }
                ]

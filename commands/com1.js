@@ -23,22 +23,18 @@ COMMANDS.cd = function(argv, cb) {
 }
 
 COMMANDS.ls = function(argv, cb) {
-   if (!argv.length) {
-      for (i in this._terminal.cwd.contents) {
-         var cur = this._terminal.cwd.contents[i];
-         if (cur.name[0] != '.')
-            this._terminal.Write('<div class="' + cur.type + '">' + cur.name + '</div>');
-      }
-   } else {
-      var entry = this._terminal.GetEntry(argv[0]);
-      if (!entry)
-         this._terminal.Write('ls: cannot access ' + argv[0] + ': No such file or directory');
+   var entry = argv.length ? this._terminal.GetEntry(argv[0]) : this._terminal.cwd;
+   if (!entry)
+      this._terminal.Write('ls: cannot access ' + argv[0] + ': No such file or directory');
+   if (entry.type == 'dir') {
       for (i in entry.contents) {
          if (entry.contents[i].name[0] != '.') {
             this._terminal.Write('<div class="' + entry.contents[i].type +
                 '">' + entry.contents[i].name + '</div>');
          }
       }
+   } else {
+      this._terminal.Write('<div class="' + entry.type + '">' + entry.name + '</div>');
    }
    cb();
 }

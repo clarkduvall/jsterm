@@ -2,19 +2,25 @@ body {
    background: black;
 }
 
-.jsterm {
+div.jsterm {
    background: black;
    font-family: monospace;
    font-size: 16px;
    color: #E0E0E0;
+   word-wrap: break-word;
 }
 
-.user {
+div.jsterm .user {
    color: #73E234;
    font-weight: bold;
 }
 
-.dir {
+div.jsterm .dir {
    color: #729FBD;
+   font-weight: bold;
+}
+
+div.jsterm .exec {
+   color: #73E234;
    font-weight: bold;
 }
