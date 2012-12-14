@@ -12,6 +12,8 @@ COMMANDS.cat =  function(argv, cb) {
 }
 
 COMMANDS.cd = function(argv, cb) {
+   if (!argv.length)
+      argv[0] = '~';
    var entry = this._terminal.GetEntry(argv[0]);
    if (!entry)
       this._terminal.Write('bash: cd: ' + argv[0] + ': No such file or directory');
