@@ -162,7 +162,7 @@ COMMANDS.help = function(argv, cb) {
        'of that directory. The contents of a <span class="text">file</span> ' +
        'can be viewed using "cat". <span class="img">Images</span> are ' +
        'displayed using "gimp".<br><br>If there is a command you want to get ' +
-       'out of, press Ctrl+C or Ctrl+D<br><br>');
+       'out of, press Ctrl+C or Ctrl+D.<br><br>');
    this._terminal.Write('Commands are:<br>');
    for (c in this._terminal.commands) {
       if (this._terminal.commands.hasOwnProperty(c) && !c.startswith('_'))
