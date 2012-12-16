@@ -2,12 +2,14 @@ var COMMANDS = COMMANDS || {};
 
 COMMANDS.cat =  function(argv, cb) {
    var filenames = this._terminal.ParseArgs(argv).filenames;
+   this._terminal.Scroll();
    if (!filenames.length) {
       this._terminal.ReturnHandler = function() {
          var stdout = this.Stdout();
          if (!stdout)
             return;
          stdout.innerHTML += '<br>' + stdout.innerHTML + '<br>';
+         this.Scroll();
          this.NewStdout();
       }.bind(this._terminal);
       return;
@@ -45,8 +47,8 @@ COMMANDS.ls = function(argv, cb) {
    var args = result.args;
    var filename = result.filenames[0];
    var entry = filename ? this._terminal.GetEntry(filename) : this._terminal.cwd;
-   var WriteEntry = function (e) {
-      this.Write('<span class="' + e.type + '">' + this.CreateLink(e, e.name) + '</span>');
+   var WriteEntry = function (e, str) {
+      this.WriteLink(e, str);
       if (args.indexOf('l') > -1 && 'description' in e)
          this.Write(' - ' + e.description);
       this.Write('<br>');
@@ -55,12 +57,14 @@ COMMANDS.ls = function(argv, cb) {
    if (!entry)
       this._terminal.Write('ls: cannot access ' + filename + ': No such file or directory');
    else if (entry.type == 'dir') {
+      var dirStr = this._terminal.DirString(entry);
       for (i in entry.contents) {
-         if (args.indexOf('a') > -1 || entry.contents[i].name[0] != '.')
-            WriteEntry(entry.contents[i]);
+         var e = entry.contents[i];
+         if (args.indexOf('a') > -1 || e.name[0] != '.')
+            WriteEntry(e, dirStr + '/' + e.name);
       }
    } else {
-      WriteEntry(entry);
+      WriteEntry(entry, filename);
    }
    cb();
 }
@@ -97,16 +101,19 @@ COMMANDS.sudo = function(argv, cb) {
       if (++count < 3) {
          this.Write('<br/>Sorry, try again.<br/>');
          this.Write('[sudo] password for ' + this.config.username + ': ');
+         this.Scroll();
       } else {
          this.Write('<br/>sudo: 3 incorrect password attempts');
          cb();
       }
    }.bind(this._terminal);
-   this._terminal.Write('[sudo] password for clark: ');
+   this._terminal.Write('[sudo] password for ' + this._terminal.config.username + ': ');
+   this.Scroll();
 }
 
 COMMANDS.login = function(argv, cb) {
    this._terminal.ReturnHandler = function() {
+      this.Scroll();
       var username = this.Stdout().innerHTML;
       if (username)
          this.config.username = username;
@@ -115,4 +122,28 @@ COMMANDS.login = function(argv, cb) {
    }.bind(this._terminal);
    this._terminal.Write('Username: ');
    this._terminal.NewStdout();
+}
+
+COMMANDS.tree = function(argv, cb) {
+   var term = this._terminal;
+   function Tree(dir, level) {
+      dir.contents.forEach(function(entry) {
+         if (entry.name.startswith('.'))
+            return;
+         var str = '';
+         for (var i = 0; i < level; i++)
+            str += '   ';
+         str += '|--';
+         term.Write(str);
+         term.WriteLink(entry, term.DirString(dir) + '/' + entry.name);
+         term.Write('<br>');
+         if (entry.type == 'dir')
+            Tree(entry, level + 1);
+      });
+   };
+   var home = this._terminal.GetEntry('~');
+   this._terminal.WriteLink(home, '~');
+   this._terminal.Write('<br>');
+   Tree(home, 0);
+   cb();
 }

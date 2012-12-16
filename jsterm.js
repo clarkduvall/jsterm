@@ -68,32 +68,13 @@
          return this.DirString(this.cwd);
       },
 
-      CreateLink: function(dir, name) {
-         function TypeLink(text, link) {
-            return '<a href="javascript:void(0)" onclick="TypeCommand(\'' +
-                text + '\')">' + link + '</a>';
-         };
-         var dirStr = this.DirString(dir);
-         if (dir.type == 'dir')
-            return TypeLink('ls ' + dirStr, name);
-         else if (dir.type == 'text')
-            return TypeLink('cat ' + dirStr, name);
-         else if (dir.type == 'img')
-            return TypeLink('gimp ' + dirStr, name);
-         else if (dir.type == 'exec')
-            return '<a href="' + dir.contents + '">' + name + '</a>';
-      },
-
       DirString: function(d) {
-         console.log(d);
          var dir = d;
          var dirStr = '';
-         while (dir.type == 'dir' && this._DirNamed('..', dir.contents).contents !== dir.contents) {
+         while (this._DirNamed('..', dir.contents).contents !== dir.contents) {
             dirStr = '/' + dir.name + dirStr;
             dir = this._DirNamed('..', dir.contents);
          }
-         if (dir.type != 'dir')
-            dirStr = '/' + dir.name + dirStr;
          return '~' + dirStr;
       },
 
@@ -212,6 +193,11 @@
          return { 'filenames': filenames, 'args': args };
       },
 
+      WriteLink: function(e, str) {
+         this.Write('<span class="' + e.type + '">' + this._CreateLink(e, str) +
+             '</span>');
+      },
+
       Stdout: function() {
          return this.div.querySelector('#stdout');
       },
@@ -222,6 +208,21 @@
          var newStdout = document.createElement('span');
          newStdout.id = 'stdout';
          stdout.parentNode.insertBefore(newStdout, stdout.nextSibling);
+      },
+
+      _CreateLink: function(entry, str) {
+         function TypeLink(text, link) {
+            return '<a href="javascript:void(0)" onclick="TypeCommand(\'' +
+                text + '\')">' + link + '</a>';
+         };
+         if (entry.type == 'dir' || entry.type == 'link')
+            return TypeLink('ls -l ' + str, entry.name);
+         else if (entry.type == 'text')
+            return TypeLink('cat ' + str, entry.name);
+         else if (entry.type == 'img')
+            return TypeLink('gimp ' + str, entry.name);
+         else if (entry.type == 'exec')
+            return '<a href="' + entry.contents + '">' + entry.name + '</a>';
       },
 
       _Dequeue: function() {

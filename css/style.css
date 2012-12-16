@@ -2,35 +2,41 @@ body {
    background: black;
 }
 
+.jsterm a {
+   color: #E0E0E0;
+   text-decoration: none;
+}
+
+.jsterm a:hover {
+   text-decoration: underline;
+}
+
 div.jsterm {
    background: black;
    font-family: monospace;
    font-size: 16px;
    color: #E0E0E0;
-   width: 1000px;
-   word-wrap: break-word;
+   width: 90%;
+   margin-bottom: 20px;
+   white-space: pre;
 }
 
-div.jsterm .user {
+div.jsterm .user, div.jsterm .user a {
    color: #73E234;
    font-weight: bold;
 }
 
-div.jsterm .dir, .link {
+div.jsterm .dir, div.jsterm .link, div.jsterm .dir a, div.jsterm .link a {
    color: #729FBD;
    font-weight: bold;
 }
 
-div.jsterm .exec {
+div.jsterm .exec, div.jsterm .exec a {
    color: #73E234;
    font-weight: bold;
 }
 
-div.jsterm .img {
+div.jsterm .img, div.jsterm .img a {
    color: #95709F;
    font-weight: bold;
-}
-
-.jsterm a {
-   color: #E0E0E0;
 }
