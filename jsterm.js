@@ -48,16 +48,17 @@
 
          window.onkeydown = function(e) {
             var key = (e.which) ? e.which : e.keyCode;
-            if (key == 8 || key == 9 || key == 13 || key == 46)
+            if (key == 8 || key == 9 || key == 13 || key == 46 || key == 38 ||
+                key == 40 || e.ctrlKey)
                e.preventDefault();
-            this._HandleSpecialKey(key);
+            this._HandleSpecialKey(key, e);
          }.bind(this);
          window.onkeypress = function(e) {
             this._TypeKey((e.which) ? e.which : e.keyCode);
          }.bind(this);
 
          this.ReturnHandler = this._Execute;
-         this.cwd = this.fs.contents[1];
+         this.cwd = this.fs;
          this._Prompt();
          this._ToggleBlinker(600);
          this._Dequeue();
@@ -74,6 +75,8 @@
       },
 
       GetEntry: function(path) {
+         if (!path)
+            return null;
          path = path.replace(/^\s+/, '').replace(/\s+$/, '');
          if (!path.length)
             return null;
@@ -167,6 +170,10 @@
          this._queue.push(command);
       },
 
+      Scroll: function() {
+         window.scrollTo(0, document.body.scrollHeight);
+      },
+
       _Dequeue: function() {
          if (!this._queue.length)
             return;
@@ -192,15 +199,15 @@
             if (entry.type == 'dir')
                this._AddDirs(entry, curDir);
          }.bind(this));
-         curDir.contents.push({
-            'name': '.',
-            'type': 'link',
-            'contents': curDir
-         });
-         curDir.contents.push({
+         curDir.contents.unshift({
             'name': '..',
             'type': 'link',
             'contents': parentDir
+         });
+         curDir.contents.unshift({
+            'name': '.',
+            'type': 'link',
+            'contents': curDir
          });
       },
 
@@ -245,7 +252,7 @@
          command.id = 'stdout';
          div.appendChild(command);
          this._ToggleBlinker(0);
-         window.scrollTo(0, document.body.scrollHeight);
+         this.Scroll();
       },
 
       _TypeKey: function(key) {
@@ -289,13 +296,21 @@
                parts[parts.length - 1] = pathParts.join('/');
                stdout.innerHTML = parts.join(' ');
             }
+         // Ctrl+C, Ctrl+D.
+         } else if ((key == 67 || key == 68) && e.ctrlKey) {
+            if (key == 67)
+               this.Write('^C');
+            this.DefaultReturnHandler();
+            this._Prompt();
          }
       },
 
       _Execute: function(fullCommand) {
          this._ResetID('#stdout');
          var output = document.createElement('div');
-         output.id = 'stdout';
+         var stdout = document.createElement('span');
+         stdout.id = 'stdout';
+         output.appendChild(stdout);
          this.div.appendChild(output);
 
          var parts = fullCommand.split(' ').filter(function(x) {return x;});
@@ -305,10 +320,11 @@
          if (command && command.length) {
             if (command in this.commands) {
                this.commands[command](args, function() {
+                  this.DefaultReturnHandler();
                   this._Prompt()
                }.bind(this));
             } else if (entry && entry.type == 'exec') {
-               window.open(entry.url, '_blank');
+               window.open(entry.contents, '_blank');
                this._Prompt();
             } else {
                this.Write(command + ': command not found');
@@ -320,7 +336,6 @@
          if (fullCommand.length)
             this._history.unshift(fullCommand);
          this._historyIndex = -1;
-         this.DefaultReturnHandler();
       }
    };
 

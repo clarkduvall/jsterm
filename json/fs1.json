@@ -5,7 +5,14 @@
       {
          "name": "file1",
          "type": "text",
-         "contents": "Hello World!"
+         "contents": "Hello World!",
+         "description": "FOOO"
+      },
+      {
+         "name": "pic.jpg",
+         "type": "img",
+         "contents": "/images/pic.jpg",
+         "caption": "(I'm the one on the right.)"
       },
       {
          "name": "dir1",
@@ -23,8 +30,8 @@
                   {
                      "name": "file3",
                      "type": "exec",
-                     "url": "http://google.com",
-                     "contents": "blahblah"
+                     "contents": "http://google.com",
+                     "description": "blahblah"
                   }
                ]
             }

@@ -7,6 +7,7 @@ div.jsterm {
    font-family: monospace;
    font-size: 16px;
    color: #E0E0E0;
+   width: 500px;
    word-wrap: break-word;
 }
 
@@ -15,12 +16,17 @@ div.jsterm .user {
    font-weight: bold;
 }
 
-div.jsterm .dir {
+div.jsterm .dir, .link {
    color: #729FBD;
    font-weight: bold;
 }
 
 div.jsterm .exec {
    color: #73E234;
+   font-weight: bold;
+}
+
+div.jsterm .img {
+   color: #95709F;
    font-weight: bold;
 }
