@@ -65,12 +65,35 @@
       },
 
       GetCWD: function() {
-         var dir = this.cwd;
+         return this.DirString(this.cwd);
+      },
+
+      CreateLink: function(dir, name) {
+         function TypeLink(text, link) {
+            return '<a href="javascript:void(0)" onclick="TypeCommand(\'' +
+                text + '\')">' + link + '</a>';
+         };
+         var dirStr = this.DirString(dir);
+         if (dir.type == 'dir')
+            return TypeLink('ls ' + dirStr, name);
+         else if (dir.type == 'text')
+            return TypeLink('cat ' + dirStr, name);
+         else if (dir.type == 'img')
+            return TypeLink('gimp ' + dirStr, name);
+         else if (dir.type == 'exec')
+            return '<a href="' + dir.contents + '">' + name + '</a>';
+      },
+
+      DirString: function(d) {
+         console.log(d);
+         var dir = d;
          var dirStr = '';
-         while (this._DirNamed('..', dir.contents).contents !== dir.contents) {
+         while (dir.type == 'dir' && this._DirNamed('..', dir.contents).contents !== dir.contents) {
             dirStr = '/' + dir.name + dirStr;
             dir = this._DirNamed('..', dir.contents);
          }
+         if (dir.type != 'dir')
+            dirStr = '/' + dir.name + dirStr;
          return '~' + dirStr;
       },
 
@@ -95,7 +118,7 @@
       },
 
       Write: function(text) {
-         var output = this.div.querySelector('#stdout');
+         var output = this.Stdout();
          if (!output)
             return;
          output.innerHTML += text;
@@ -174,6 +197,33 @@
          window.scrollTo(0, document.body.scrollHeight);
       },
 
+      ParseArgs: function(argv) {
+         var args = [];
+         var filenames = [];
+         for (i in argv) {
+            if (argv[i].startswith('-')) {
+               var opts = argv[i].substring(1);
+               for (var j = 0; j < opts.length; j++)
+                  args.push(opts.charAt(j));
+            } else {
+               filenames.push(argv[i]);
+            }
+         }
+         return { 'filenames': filenames, 'args': args };
+      },
+
+      Stdout: function() {
+         return this.div.querySelector('#stdout');
+      },
+
+      NewStdout: function() {
+         var stdout = this.Stdout();
+         this._ResetID('#stdout');
+         var newStdout = document.createElement('span');
+         newStdout.id = 'stdout';
+         stdout.parentNode.insertBefore(newStdout, stdout.nextSibling);
+      },
+
       _Dequeue: function() {
          if (!this._queue.length)
             return;
@@ -216,11 +266,13 @@
          if (blinker) {
             blinker.parentNode.removeChild(blinker);
          } else {
-            var stdout = this.div.querySelector('#stdout');
-            blinker = document.createElement('span');
-            blinker.id = 'blinker';
-            blinker.innerHTML = '&#x2588';
-            stdout.parentNode.appendChild(blinker);
+            var stdout = this.Stdout();
+            if (stdout) {
+               blinker = document.createElement('span');
+               blinker.id = 'blinker';
+               blinker.innerHTML = '&#x2588';
+               stdout.parentNode.appendChild(blinker);
+            }
          }
          if (timeout) {
             setTimeout(function() {
@@ -243,7 +295,7 @@
          var prompt = document.createElement('span');
          prompt.classList.add('prompt');
          prompt.id = 'currentPrompt';
-         prompt.innerHTML = this.config.prompt(this.GetCWD());
+         prompt.innerHTML = this.config.prompt(this.GetCWD(), this.config.username);
          div.appendChild(prompt);
 
          this._ResetID('#stdout');
@@ -256,7 +308,7 @@
       },
 
       _TypeKey: function(key) {
-         var stdout = this.div.querySelector('#stdout');
+         var stdout = this.Stdout();
          if (!stdout || key < 0x20 || key > 0x7E || key == 13 || key == 9)
             return;
          var letter = String.fromCharCode(key);
@@ -264,7 +316,7 @@
       },
 
       _HandleSpecialKey: function(key, e) {
-         var stdout = this.div.querySelector('#stdout');
+         var stdout = this.Stdout();
          if (!stdout)
             return;
          // Backspace/delete.
@@ -344,10 +396,12 @@
    }
 
    var term = Object.create(Terminal);
-   term.Init(CONFIG, '/json/fs1.json', COMMANDS, function() {
-      term.Enqueue('cat file2');
-      term.Enqueue('cd ..');
-      term.Enqueue('cat file1');
+   term.Init(CONFIG, '/json/myfs.json', COMMANDS, function() {
+      term.Enqueue('login');
+      term.Enqueue('clark');
+      term.Enqueue('******');
+      term.Enqueue('ls -l projects');
+      term.Enqueue('gimp images/pic.jpg');
       term.Begin();
    });
 

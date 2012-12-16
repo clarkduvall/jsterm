@@ -7,7 +7,7 @@ div.jsterm {
    font-family: monospace;
    font-size: 16px;
    color: #E0E0E0;
-   width: 500px;
+   width: 1000px;
    word-wrap: break-word;
 }
 
@@ -29,4 +29,8 @@ div.jsterm .exec {
 div.jsterm .img {
    color: #95709F;
    font-weight: bold;
+}
+
+.jsterm a {
+   color: #E0E0E0;
 }
