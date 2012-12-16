@@ -222,7 +222,8 @@
          else if (entry.type == 'img')
             return TypeLink('gimp ' + str, entry.name);
          else if (entry.type == 'exec')
-            return '<a href="' + entry.contents + '">' + entry.name + '</a>';
+            return '<a href="' + entry.contents + '" target="_blank">' +
+                entry.name + '</a>';
       },
 
       _Dequeue: function() {
