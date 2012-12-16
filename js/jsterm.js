@@ -401,8 +401,13 @@
       term.Enqueue('login');
       term.Enqueue('clark');
       term.Enqueue('******');
-      term.Enqueue('ls -l projects');
-      term.Enqueue('gimp images/pic.jpg');
+      term.Enqueue('cat README');
+      term.Enqueue('help');
+      term.Enqueue('cd projects');
+      term.Enqueue('ls -l');
+      term.Enqueue('cd ..');
+      term.Enqueue('tree');
+      term.Enqueue('ls');
       term.Begin();
    });
 

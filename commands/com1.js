@@ -49,9 +49,13 @@ COMMANDS.ls = function(argv, cb) {
    var entry = filename ? this._terminal.GetEntry(filename) : this._terminal.cwd;
    var WriteEntry = function (e, str) {
       this.WriteLink(e, str);
-      if (args.indexOf('l') > -1 && 'description' in e)
-         this.Write(' - ' + e.description);
-      this.Write('<br>');
+      if (args.indexOf('l') > -1) {
+         if ('description' in e)
+            this.Write(' - ' + e.description);
+         this.Write('<br>');
+      } else {
+         this.Write('  ');
+      }
    }.bind(this._terminal);
 
    if (!entry)
@@ -145,5 +149,10 @@ COMMANDS.tree = function(argv, cb) {
    this._terminal.WriteLink(home, '~');
    this._terminal.Write('<br>');
    Tree(home, 0);
+   cb();
+}
+
+COMMANDS.help = function(argv, cb) {
+   this._terminal.Write('You can navigate either by clicking on anything that <a href="javascript:void(0)">underlines</a> when you put your mouse over it, or by typing commands in the terminal. Type the name of a <span class="exec">link</span> to view it. Use "cd" to change into a <span class="dir">directory</span>, or use "ls" to list the contents of that directory. The contents of a <span class="text">file</span> can be viewed using "cat". <span class="img">Images</span> are displayed using "gimp".');
    cb();
 }

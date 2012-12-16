@@ -18,7 +18,7 @@ div.jsterm {
    color: #E0E0E0;
    width: 90%;
    margin-bottom: 20px;
-   white-space: pre;
+   white-space: pre-wrap;
 }
 
 div.jsterm .user, div.jsterm .user a {
