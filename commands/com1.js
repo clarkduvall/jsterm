@@ -112,7 +112,7 @@ COMMANDS.sudo = function(argv, cb) {
       }
    }.bind(this._terminal);
    this._terminal.Write('[sudo] password for ' + this._terminal.config.username + ': ');
-   this.Scroll();
+   this._terminal.Scroll();
 }
 
 COMMANDS.login = function(argv, cb) {
@@ -122,10 +122,12 @@ COMMANDS.login = function(argv, cb) {
       if (username)
          this.config.username = username;
       this.Write('<br>Password: ');
+      this.Scroll();
       this.ReturnHandler = function() { cb(); }
    }.bind(this._terminal);
    this._terminal.Write('Username: ');
    this._terminal.NewStdout();
+   this._terminal.Scroll();
 }
 
 COMMANDS.tree = function(argv, cb) {
