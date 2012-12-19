@@ -138,8 +138,8 @@ COMMANDS.tree = function(argv, cb) {
             return;
          var str = '';
          for (var i = 0; i < level; i++)
-            str += '   ';
-         str += '|--';
+            str += '|  ';
+         str += '|&mdash;&mdash;';
          term.Write(str);
          term.WriteLink(entry, term.DirString(dir) + '/' + entry.name);
          term.Write('<br>');
