@@ -398,7 +398,7 @@
    }
 
    var term = Object.create(Terminal);
-   term.Init(CONFIG, '/json/sample.json', COMMANDS, function() {
+   term.Init(CONFIG, '/json/myfs.json', COMMANDS, function() {
       term.Enqueue('login');
       term.Enqueue('clark');
       term.Enqueue('******');
