@@ -89,7 +89,8 @@ COMMANDS.gimp = function(argv, cb) {
       imgs[imgs.length - 1].onload = function() {
          this.Scroll();
       }.bind(this._terminal);
-      this._terminal.Write('<br/>' + entry.caption);
+      if ('caption' in entry)
+         this._terminal.Write('<br/>' + entry.caption);
    }
    cb();
 }

@@ -35,6 +35,7 @@ class Filesystem(object):
          'type': 'img',
          'contents': '/images/%s' % name
       }
+      return image_json
 
    def _CreateExec(self, path):
       contents = _ReadFile(path).split('\n')
@@ -59,8 +60,8 @@ class Filesystem(object):
       if name is None:
          name = os.path.split(path)[-1]
       dir_json = {
-         'type': 'dir',
          'name': name,
+         'type': 'dir',
          'contents': []
       }
       for filename in os.listdir(path):
