@@ -11,8 +11,8 @@
       {
          "name": "pic.jpg",
          "type": "img",
-         "contents": "/images/pic.jpg",
-         "caption": "(I'm the one on the right.)"
+         "contents": "/images/penguin.png",
+         "caption": "What a beautiful penguin."
       },
       {
          "name": "dir1",
@@ -24,7 +24,7 @@
                "contents": "foo"
             },
             {
-               "name": "poop",
+               "name": "foo",
                "type": "dir",
                "contents": [
                   {
