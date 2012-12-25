@@ -21,7 +21,8 @@ terminal. The directory structure is as follows:
 ## Filesystem Format
 A filesystem is a recursive grouping of JSON arrays of objects. Each nested
 array represents the listing of items in a directory. Each object in the array
-defines a file or directory. For an example, see json/sample.json.
+defines a file or directory. For an example, see
+[json/sample.json](jsterm/tree/master/json/sample.json).
 
 ## make_fs.py
 This is a script that will create a jsterm filesystem from a real directory.
