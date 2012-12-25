@@ -29,8 +29,8 @@ This is a script that will create a jsterm filesystem from a real directory.
 Examples of how to make different file types are as follows:
 - Text file (no execute permissions):
 
-	This is a text file.
+```This is a text file.```
 - Executable/link (MUST BE MARKED EXECUTABLE):
 
-	http://google.com
+```http://google.com```
 - Image file: can be any image file with a standard extension (e.g. .png, .jpg)
