@@ -21,22 +21,37 @@ div.jsterm {
    white-space: pre-wrap;
 }
 
-div.jsterm .user, div.jsterm .user a {
-   color: #73E234;
+div.jsterm .host, div.jsterm .host a {
+   color: #5555ff;
    font-weight: bold;
 }
 
-div.jsterm .dir, div.jsterm .link, div.jsterm .dir a, div.jsterm .link a {
-   color: #729FBD;
+div.jsterm .user, div.jsterm .user a {
+   color: #555555;
+   font-weight: bold;
+}
+
+div.jsterm .cwd, div.jsterm .cwd a {
+   color: #ffff55;
+   font-weight: bold;
+}
+
+div.jsterm .dir, div.jsterm .dir a {
+   color: #5555ff;
+   font-weight: bold;
+}
+
+div.jsterm .link, div.jsterm .link a {
+   color: #5555ff;
    font-weight: bold;
 }
 
 div.jsterm .exec, div.jsterm .exec a {
-   color: #73E234;
+   color: #55ff55;
    font-weight: bold;
 }
 
 div.jsterm .img, div.jsterm .img a {
-   color: #95709F;
+   color: #ff55ff;
    font-weight: bold;
 }

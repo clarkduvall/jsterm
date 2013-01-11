@@ -3,7 +3,8 @@ var CONFIG = CONFIG || {};
 CONFIG.prompt = function(cwd, user) {
    if (user)
       return '<span class="user">' + user +
-          '@clarkduvall.com</span>:<span class="dir">' + cwd + '</span>$ ';
+          '</span>@<span class="host">clarkduvall.com</span>:<span class="cwd">' +
+          cwd + '</span>$ ';
    return 'jsterm1.0 $ ';
 };
 
