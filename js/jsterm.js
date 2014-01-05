@@ -45,8 +45,9 @@
       };
    }
 
-   function _Ajax(name, cb) {
+   function loadFS(name, cb) {
       var ajax = new XMLHttpRequest();
+
       ajax.onreadystatechange = function() {
          if (ajax.readyState == 4 && ajax.status == 200)
             cb(ajax.responseText);
@@ -56,113 +57,128 @@
    };
 
    var Terminal = {
-      Init: function(config, fs, commands, cb) {
+      init: function(config, fs, commands, cb) {
          this._queue = [];
          this._history = [];
          this._historyIndex = -1;
-         this.LoadConfig(config);
+         this.loadConfig(config);
+
          if (commands)
-            this.LoadCommands(commands);
+            this.loadCommands(commands);
+
          if (fs)
-            this.LoadFS(fs, cb);
+            this.loadFS(fs, cb);
          else if (cb)
             cb();
       },
 
-      LoadFS: function(name, cb) {
-         _Ajax(name, function(responseText) {
+      loadFS: function(name, cb) {
+         loadFS(name, function(responseText) {
             this.fs = JSON.parse(responseText);
-            this._AddDirs(this.fs, this.fs);
-            if (cb) cb();
+            this._addDirs(this.fs, this.fs);
+            cb && cb();
          }.bind(this));
       },
 
-      LoadCommands: function(commands) {
+      loadCommands: function(commands) {
          this.commands = commands;
          this.commands._terminal = this;
       },
 
-      LoadConfig: function(config) {
+      loadConfig: function(config) {
          this.config = config;
       },
 
-      Begin: function(element) {
+      begin: function(element) {
          var parentElement = element || document.body;
+
          this.div = document.createElement('div');
          this.div.classList.add('jsterm');
          parentElement.appendChild(this.div);
 
          window.onkeydown = function(e) {
             var key = (e.which) ? e.which : e.keyCode;
+
             if (key == 8 || key == 9 || key == 13 || key == 46 || key == 38 ||
                 key == 40 || e.ctrlKey)
                e.preventDefault();
-            this._HandleSpecialKey(key, e);
+            this._handleSpecialKey(key, e);
          }.bind(this);
+
          window.onkeypress = function(e) {
-            this._TypeKey((e.which) ? e.which : e.keyCode);
+            this._typeKey((e.which) ? e.which : e.keyCode);
          }.bind(this);
 
-         this.ReturnHandler = this._Execute;
+         this.returnHandler = this._execute;
          this.cwd = this.fs;
-         this._Prompt();
-         this._ToggleBlinker(600);
-         this._Dequeue();
+         this._prompt();
+         this._toggleBlinker(600);
+         this._dequeue();
       },
 
-      GetCWD: function() {
-         return this.DirString(this.cwd);
+      getCWD: function() {
+         return this.dirString(this.cwd);
       },
 
-      DirString: function(d) {
-         var dir = d;
-         var dirStr = '';
-         while (this._DirNamed('..', dir.contents).contents !== dir.contents) {
+      dirString: function(d) {
+         var dir = d,
+             dirStr = '';
+
+         while (this._dirNamed('..', dir.contents).contents !== dir.contents) {
             dirStr = '/' + dir.name + dirStr;
-            dir = this._DirNamed('..', dir.contents);
+            dir = this._dirNamed('..', dir.contents);
          }
          return '~' + dirStr;
       },
 
-      GetEntry: function(path) {
+      getEntry: function(path) {
+         var entry,
+             parts;
+
          if (!path)
             return null;
+
          path = path.replace(/^\s+/, '').replace(/\s+$/, '');
          if (!path.length)
             return null;
-         var entry = this.cwd;
+
+         entry = this.cwd;
          if (path[0] == '~') {
             entry = this.fs;
             path = path.substring(1, path.length);
          }
-         var parts = path.split('/').filter(function(x) {return x;});
-         for (i in parts) {
-            entry = this._DirNamed(parts[i], entry.contents);
+
+         parts = path.split('/').filter(function(x) {return x;});
+         for (var i = 0; i < parts.length; ++i) {
+            entry = this._dirNamed(parts[i], entry.contents);
             if (!entry)
                return null;
          }
+
          return entry;
       },
 
-      Write: function(text) {
-         var output = this.Stdout();
+      write: function(text) {
+         var output = this.stdout();
+
          if (!output)
             return;
          output.innerHTML += text;
       },
 
-      DefaultReturnHandler: function() {
-         this.ReturnHandler = this._Execute;
+      defaultReturnHandler: function() {
+         this.returnHandler = this._execute;
       },
 
-      TypeCommand: function(command, cb) {
+      typeCommand: function(command, cb) {
          var that = this;
+
          (function type(i) {
             if (i == command.length) {
-               that._HandleSpecialKey(13);
+               that._handleSpecialKey(13);
                if (cb) cb();
             } else {
-               that._TypeKey(command.charCodeAt(i));
+               that._typeKey(command.charCodeAt(i));
                setTimeout(function() {
                   type(i + 1);
                }, 100);
@@ -170,19 +186,25 @@
          })(0);
       },
 
-      TabComplete: function(text) {
-         var parts = text.replace(/^\s+/, '').split(' ');
+      tabComplete: function(text) {
+         var parts = text.replace(/^\s+/, '').split(' '),
+             matches = [];
          if (!parts.length)
             return [];
-         var matches = [];
+
          if (parts.length == 1) {
             // TODO: Combine with below.
-            var pathParts = parts[0].replace(/[\/]+/, '/').split('/');
-            var last = pathParts.pop();
-            var dir = (pathParts.length > 0) ? this.GetEntry(pathParts.join('/')) : this.cwd;
+            var pathParts = parts[0].replace(/[\/]+/, '/').split('/'),
+                last = pathParts.pop(),
+                dir = (pathParts.length > 0) ? this.getEntry(pathParts.join('/')) : this.cwd,
+                n,
+                fullPath,
+                last,
+                dir;
+
             if (dir) {
                for (var i in dir.contents) {
-                  var n = dir.contents[i].name;
+                  n = dir.contents[i].name;
                   if (n.startswith(last) && !n.startswith('.') && n != last) {
                      if (dir.contents[i].type == 'exec')
                         matches.push(n + ' ');
@@ -197,14 +219,16 @@
                   matches.push(c + ' ');
             }
          } else {
-            var fullPath = parts[parts.length - 1];
-            var pathParts = fullPath.replace(/[\/]+/, '/').split('/');
-            var last = pathParts.pop();
-            var dir = (pathParts.length > 0) ? this.GetEntry(pathParts.join('/')) : this.cwd;
+            fullPath = parts[parts.length - 1];
+            pathParts = fullPath.replace(/[\/]+/, '/').split('/');
+            last = pathParts.pop();
+            dir = (pathParts.length > 0) ? this.getEntry(pathParts.join('/')) : this.cwd;
+
             if (!dir)
                return [];
+
             for (var i in dir.contents) {
-               var n = dir.contents[i].name;
+               n = dir.contents[i].name;
                if (n.startswith(last) && !n.startswith('.') && n != last) {
                   if (dir.contents[i].type == 'dir')
                      matches.push(n + '/');
@@ -216,21 +240,24 @@
          return matches;
       },
 
-      Enqueue: function(command) {
+      enqueue: function(command) {
          this._queue.push(command);
+         return this;
       },
 
-      Scroll: function() {
+      scroll: function() {
          window.scrollTo(0, document.body.scrollHeight);
       },
 
-      ParseArgs: function(argv) {
-         var args = [];
-         var filenames = [];
-         for (i in argv) {
+      parseArgs: function(argv) {
+         var args = [],
+             filenames = [],
+             opts;
+
+         for (var i = 0; i < argv.length; ++i) {
             if (argv[i].startswith('-')) {
-               var opts = argv[i].substring(1);
-               for (var j = 0; j < opts.length; j++)
+               opts = argv[i].substring(1);
+               for (var j = 0; j < opts.length; ++j)
                   args.push(opts.charAt(j));
             } else {
                filenames.push(argv[i]);
@@ -239,49 +266,53 @@
          return { 'filenames': filenames, 'args': args };
       },
 
-      WriteLink: function(e, str) {
-         this.Write('<span class="' + e.type + '">' + this._CreateLink(e, str) +
+      writeLink: function(e, str) {
+         this.write('<span class="' + e.type + '">' + this._createLink(e, str) +
              '</span>');
       },
 
-      Stdout: function() {
+      stdout: function() {
          return this.div.querySelector('#stdout');
       },
 
-      NewStdout: function() {
-         var stdout = this.Stdout();
-         this._ResetID('#stdout');
-         var newStdout = document.createElement('span');
-         newStdout.id = 'stdout';
-         stdout.parentNode.insertBefore(newStdout, stdout.nextSibling);
+      newStdout: function() {
+         var stdout = this.stdout(),
+             newstdout = document.createElement('span');
+
+         this._resetID('#stdout');
+         newstdout.id = 'stdout';
+         stdout.parentNode.insertBefore(newstdout, stdout.nextSibling);
       },
 
-      _CreateLink: function(entry, str) {
-         function TypeLink(text, link) {
-            return '<a href="javascript:void(0)" onclick="TypeCommand(\'' +
+      _createLink: function(entry, str) {
+         function typeLink(text, link) {
+            return '<a href="javascript:void(0)" onclick="typeCommand(\'' +
                 text + '\')">' + link + '</a>';
          };
-         if (entry.type == 'dir' || entry.type == 'link')
-            return TypeLink('ls -l ' + str, entry.name);
-         else if (entry.type == 'text')
-            return TypeLink('cat ' + str, entry.name);
-         else if (entry.type == 'img')
-            return TypeLink('gimp ' + str, entry.name);
-         else if (entry.type == 'exec')
+
+         if (entry.type == 'dir' || entry.type == 'link') {
+            return typeLink('ls -l ' + str, entry.name);
+         } else if (entry.type == 'text') {
+            return typeLink('cat ' + str, entry.name);
+         } else if (entry.type == 'img') {
+            return typeLink('gimp ' + str, entry.name);
+         } else if (entry.type == 'exec') {
             return '<a href="' + entry.contents + '" target="_blank">' +
                 entry.name + '</a>';
+         }
       },
 
-      _Dequeue: function() {
+      _dequeue: function() {
          if (!this._queue.length)
             return;
-         this.TypeCommand(this._queue.shift(), function() {
-            this._Dequeue()
+
+         this.typeCommand(this._queue.shift(), function() {
+            this._dequeue()
          }.bind(this));
       },
 
-      _DirNamed: function(name, dir) {
-         for (i in dir) {
+      _dirNamed: function(name, dir) {
+         for (var i in dir) {
             if (dir[i].name == name) {
                if (dir[i].type == 'link')
                   return dir[i].contents;
@@ -292,10 +323,10 @@
          return null;
       },
 
-      _AddDirs: function(curDir, parentDir) {
+      _addDirs: function(curDir, parentDir) {
          curDir.contents.forEach(function(entry, i, dir) {
             if (entry.type == 'dir')
-               this._AddDirs(entry, curDir);
+               this._addDirs(entry, curDir);
          }.bind(this));
          curDir.contents.unshift({
             'name': '..',
@@ -309,12 +340,14 @@
          });
       },
 
-      _ToggleBlinker: function(timeout) {
-         var blinker = this.div.querySelector('#blinker');
+      _toggleBlinker: function(timeout) {
+         var blinker = this.div.querySelector('#blinker'),
+             stdout;
+
          if (blinker) {
             blinker.parentNode.removeChild(blinker);
          } else {
-            var stdout = this.Stdout();
+            stdout = this.stdout();
             if (stdout) {
                blinker = document.createElement('span');
                blinker.id = 'blinker';
@@ -322,49 +355,56 @@
                stdout.parentNode.appendChild(blinker);
             }
          }
+
          if (timeout) {
             setTimeout(function() {
-               this._ToggleBlinker(timeout);
+               this._toggleBlinker(timeout);
             }.bind(this), timeout);
          }
       },
 
-      _ResetID: function(query) {
+      _resetID: function(query) {
          var element = this.div.querySelector(query);
+
          if (element)
             element.removeAttribute('id');
       },
 
-      _Prompt: function() {
-         this._ResetID('#currentPrompt');
-         var div = document.createElement('div');
+      _prompt: function() {
+         var div = document.createElement('div'),
+             prompt = document.createElement('span'),
+             command = document.createElement('span');
+
+         this._resetID('#currentPrompt');
          this.div.appendChild(div);
 
-         var prompt = document.createElement('span');
          prompt.classList.add('prompt');
          prompt.id = 'currentPrompt';
-         prompt.innerHTML = this.config.prompt(this.GetCWD(), this.config.username);
+         prompt.innerHTML = this.config.prompt(this.getCWD(), this.config.username);
          div.appendChild(prompt);
 
-         this._ResetID('#stdout');
-         var command = document.createElement('span');
+         this._resetID('#stdout');
          command.classList.add('command');
          command.id = 'stdout';
          div.appendChild(command);
-         this._ToggleBlinker(0);
-         this.Scroll();
+         this._toggleBlinker(0);
+         this.scroll();
       },
 
-      _TypeKey: function(key) {
-         var stdout = this.Stdout();
+      _typeKey: function(key) {
+         var stdout = this.stdout();
+
          if (!stdout || key < 0x20 || key > 0x7E || key == 13 || key == 9)
             return;
-         var letter = String.fromCharCode(key);
-         stdout.innerHTML += letter;
+
+         stdout.innerHTML += String.fromCharCode(key);
       },
 
-      _HandleSpecialKey: function(key, e) {
-         var stdout = this.Stdout();
+      _handleSpecialKey: function(key, e) {
+         var stdout = this.stdout(),
+             parts,
+             pathParts;
+
          if (!stdout)
             return;
          // Backspace/delete.
@@ -372,7 +412,7 @@
             stdout.innerHTML = stdout.innerHTML.replace(/.$/, '');
          // Enter.
          else if (key == 13)
-            this.ReturnHandler(stdout.innerHTML);
+            this.returnHandler(stdout.innerHTML);
          // Up arrow.
          else if (key == 38) {
             if (this._historyIndex < this._history.length - 1)
@@ -388,10 +428,10 @@
                stdout.innerHTML = this._history[--this._historyIndex];
          // Tab.
          } else if (key == 9) {
-            matches = this.TabComplete(stdout.innerHTML);
+            matches = this.tabComplete(stdout.innerHTML);
             if (matches.length) {
-               var parts = stdout.innerHTML.split(' ');
-               var pathParts = parts[parts.length - 1].split('/');
+               parts = stdout.innerHTML.split(' ');
+               pathParts = parts[parts.length - 1].split('/');
                pathParts[pathParts.length - 1] = matches[0];
                parts[parts.length - 1] = pathParts.join('/');
                stdout.innerHTML = parts.join(' ');
@@ -399,39 +439,40 @@
          // Ctrl+C, Ctrl+D.
          } else if ((key == 67 || key == 68) && e.ctrlKey) {
             if (key == 67)
-               this.Write('^C');
-            this.DefaultReturnHandler();
-            this._Prompt();
+               this.write('^C');
+            this.defaultReturnHandler();
+            this._prompt();
          }
       },
 
-      _Execute: function(fullCommand) {
-         this._ResetID('#stdout');
-         var output = document.createElement('div');
-         var stdout = document.createElement('span');
+      _execute: function(fullCommand) {
+         var output = document.createElement('div'),
+             stdout = document.createElement('span'),
+             parts = fullCommand.split(' ').filter(function(x) { return x; }),
+             command = parts[0],
+             args = parts.slice(1, parts.length),
+             entry = this.getEntry(fullCommand);
+
+         this._resetID('#stdout');
          stdout.id = 'stdout';
          output.appendChild(stdout);
          this.div.appendChild(output);
 
-         var parts = fullCommand.split(' ').filter(function(x) {return x;});
-         var command = parts[0];
-         var args = parts.slice(1, parts.length);
-         var entry = this.GetEntry(fullCommand);
          if (command && command.length) {
             if (command in this.commands) {
                this.commands[command](args, function() {
-                  this.DefaultReturnHandler();
-                  this._Prompt()
+                  this.defaultReturnHandler();
+                  this._prompt()
                }.bind(this));
             } else if (entry && entry.type == 'exec') {
                window.open(entry.contents, '_blank');
-               this._Prompt();
+               this._prompt();
             } else {
-               this.Write(command + ': command not found');
-               this._Prompt();
+               this.write(command + ': command not found');
+               this._prompt();
             }
          } else {
-            this._Prompt()
+            this._prompt()
          }
          if (fullCommand.length)
             this._history.unshift(fullCommand);
@@ -444,21 +485,21 @@
    }
 
    var term = Object.create(Terminal);
-   term.Init(CONFIG, '/json/sample.json', COMMANDS, function() {
-      term.Enqueue('login');
-      term.Enqueue('clark');
-      term.Enqueue('******');
-      term.Enqueue('cat README');
-      term.Enqueue('help');
-      term.Enqueue('cd projects');
-      term.Enqueue('ls -l');
-      term.Enqueue('cd ..');
-      term.Enqueue('tree');
-      term.Enqueue('ls');
-      term.Begin();
+   term.init(CONFIG, '/json/myfs.json', COMMANDS, function() {
+      term.enqueue('login')
+          .enqueue('clark')
+          .enqueue('******')
+          .enqueue('cat README')
+          .enqueue('help')
+          .enqueue('cd projects')
+          .enqueue('ls -l')
+          .enqueue('cd ..')
+          .enqueue('tree')
+          .enqueue('ls')
+          .begin();
    });
 
-   window.TypeCommand = function(command) {
-      term.TypeCommand(command);
+   window.typeCommand = function(command) {
+      term.typeCommand(command);
    };
 })();
