@@ -3,19 +3,19 @@ jsterm is a terminal simulator that uses a JSON filesystem. To see it in use,
 check out [clarkduvall.com](http://clarkduvall.com).
 
 ## How To Use
-At the bottom of the [js/jsterm.js](jsterm/tree/master/js/jsterm.js) file,
-there is a list of term.Enqueue() calls. This is where the commands are set that
-are run when the page loads. Other changes can be made to personalize your
+At the bottom of the [js/jsterm.js](js/jsterm.js) file,
+there is a series of term.enqueue() calls. This is where the commands are set
+that are run when the page loads. Other changes can be made to personalize your
 terminal. The directory structure is as follows:
-- [commands](jsterm/tree/master/commands) - A JS file with all the possible
+- [commands](commands) - A JS file with all the possible
   commands that can be run. Add new commands here.
-- [config](jsterm/tree/master/config) - A JS file that has basic configuration
+- [config](config) - A JS file that has basic configuration
   information. Change things like the prompt here.
-- [css](jsterm/tree/master/css) - The CSS used on the page.
-- [images](jsterm/tree/master/images) - Image files used in your filesystem.
-- [js](jsterm/tree/master/js) - The jsterm implementation.
-- [json](jsterm/tree/master/json) - Where the filesystem is stored. Change the
-  term.Init() call in [js/jsterm.js](jsterm/tree/master/js/jsterm.js) to change
+- [css](css) - The CSS used on the page.
+- [images](images) - Image files used in your filesystem.
+- [js](js) - The jsterm implementation.
+- [json](json) - Where the filesystem is stored. Change the
+  term.Init() call in [js/jsterm.js](js/jsterm.js) to change
   which filesystem is loaded.
 
 For the loading of the filesytem to work locally, you must server the files in
@@ -29,7 +29,7 @@ python -m SimpleHTTPServer 8000
 A filesystem is a recursive grouping of JSON arrays of objects. Each nested
 array represents the listing of items in a directory. Each object in the array
 defines a file or directory. For an example, see
-[json/sample.json](jsterm/tree/master/json/sample.json).
+[json/sample.json](json/sample.json).
 
 ## make_fs.py
 This is a script that will create a jsterm filesystem from a real directory.
