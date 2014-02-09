@@ -485,17 +485,18 @@
    }
 
    var term = Object.create(Terminal);
-   term.init(CONFIG, '/json/myfs.json', COMMANDS, function() {
+   term.init(CONFIG, '/json/sample.json', COMMANDS, function() {
       term.enqueue('login')
           .enqueue('clark')
           .enqueue('******')
-          .enqueue('cat README')
+          .enqueue('cat file1')
           .enqueue('help')
-          .enqueue('cd projects')
           .enqueue('ls -l')
-          .enqueue('cd ..')
-          .enqueue('tree')
+          .enqueue('cd dir1/foo')
           .enqueue('ls')
+          .enqueue('cd ../..')
+          .enqueue('ls dir1/foo')
+          .enqueue('tree')
           .begin();
    });
 
