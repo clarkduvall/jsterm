@@ -72,3 +72,7 @@ div.jsterm .img, div.jsterm .img a {
    color: #ff55ff;
    font-weight: bold;
 }
+
+#blinker {
+    line-height: .9em;
+}
