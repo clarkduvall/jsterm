@@ -45,3 +45,6 @@ This is a text file.
 http://google.com
 ```
 - Image file: can be any image file with a standard extension (e.g. .png, .jpg)
+
+## Attribution
+If you use jsterm, it would be great if you could link to this GitHub repo. Thanks!
