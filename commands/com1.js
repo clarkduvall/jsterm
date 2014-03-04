@@ -35,11 +35,11 @@ COMMANDS.cat =  function(argv, cb) {
 
       if (!entry)
          this._terminal.write('cat: ' + filename + ': No such file or directory');
-      else if (entry.type == 'dir')
+      else if (entry.type === 'dir')
          this._terminal.write('cat: ' + filename + ': Is a directory.');
       else
          this._terminal.write(entry.contents);
-      if (i != filenames.length - 1)
+      if (i !== filenames.length - 1)
          this._terminal.write('<br>');
    }, this);
    cb();
@@ -54,7 +54,7 @@ COMMANDS.cd = function(argv, cb) {
    entry = this._terminal.getEntry(filename);
    if (!entry)
       this._terminal.write('bash: cd: ' + filename + ': No such file or directory');
-   else if (entry.type != 'dir')
+   else if (entry.type !== 'dir')
       this._terminal.write('bash: cd: ' + filename + ': Not a directory.');
    else
       this._terminal.cwd = entry;
@@ -66,9 +66,7 @@ COMMANDS.ls = function(argv, cb) {
        args = result.args,
        filename = result.filenames[0],
        entry = filename ? this._terminal.getEntry(filename) : this._terminal.cwd,
-       dirStr,
-       e,
-       write,
+       maxLen = 0,
        writeEntry;
 
    writeEntry = function(e, str) {
@@ -78,20 +76,27 @@ COMMANDS.ls = function(argv, cb) {
             this.write(' - ' + e.description);
          this.write('<br>');
       } else {
-         this.write('  ');
+         // Make all entries the same width like real ls. End with a normal
+         // space so the line breaks only after entries.
+         this.write(Array(maxLen - e.name.length + 2).join('&nbsp') + ' ');
       }
    }.bind(this._terminal);
 
    if (!entry)
       this._terminal.write('ls: cannot access ' + filename + ': No such file or directory');
-   else if (entry.type == 'dir') {
-      dirStr = this._terminal.dirString(entry);
+   else if (entry.type === 'dir') {
+      var dirStr = this._terminal.dirString(entry);
+      maxLen = entry.contents.reduce(function(prev, cur) {
+         return Math.max(prev, cur.name.length);
+      }, 0);
+
       for (var i in entry.contents) {
-         e = entry.contents[i];
-         if (args.indexOf('a') > -1 || e.name[0] != '.')
+         var e = entry.contents[i];
+         if (args.indexOf('a') > -1 || e.name[0] !== '.')
             writeEntry(e, dirStr + '/' + e.name);
       }
    } else {
+      maxLen = entry.name.length;
       writeEntry(entry, filename);
    }
    cb();
@@ -109,7 +114,7 @@ COMMANDS.gimp = function(argv, cb) {
    }
 
    entry = this._terminal.getEntry(filename);
-   if (!entry || entry.type != 'img') {
+   if (!entry || entry.type !== 'img') {
       this._terminal.write('gimp: file ' + filename + ' is not an image file.');
    } else {
       this._terminal.write('<img src="' + entry.contents + '"/>');
@@ -176,7 +181,7 @@ COMMANDS.tree = function(argv, cb) {
          term.write(str);
          term.writeLink(entry, term.dirString(dir) + '/' + entry.name);
          term.write('<br>');
-         if (entry.type == 'dir')
+         if (entry.type === 'dir')
             writeTree(entry, level + 1);
       });
    };
