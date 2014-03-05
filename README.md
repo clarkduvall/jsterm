@@ -2,6 +2,11 @@
 jsterm is a terminal simulator that uses a JSON filesystem. To see it in use,
 check out [clarkduvall.com](http://clarkduvall.com).
 
+## Disclaimer
+Most of this was written awhile ago when I knew JavaScript about as well as I
+know Spanish (which is a little, but not much). It is due for a rewrite with
+some cool new features like pipes, writable files, and other magic.
+
 ## How To Use
 At the bottom of the [js/jsterm.js](js/jsterm.js) file,
 there is a series of term.enqueue() calls. This is where the commands are set
