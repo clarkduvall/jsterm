@@ -1,0 +1,78 @@
+// Copyright 2013 Clark DuVall
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+html {
+}
+
+body {
+   background: black;
+}
+
+.jsterm a {
+   color: #E0E0E0;
+   text-decoration: none;
+}
+
+.jsterm a:hover {
+   text-decoration: underline;
+}
+
+div.jsterm {
+   background: black;
+   font-family: monospace;
+   font-size: 16px;
+   color: #E0E0E0;
+   width: 950px;
+   margin-bottom: 20px;
+   white-space: pre-wrap;
+}
+
+div.jsterm .host, div.jsterm .host a {
+   color: #5555ff;
+   font-weight: bold;
+}
+
+div.jsterm .user, div.jsterm .user a {
+   color: #ff5555;
+   font-weight: bold;
+}
+
+div.jsterm .cwd, div.jsterm .cwd a {
+   color: #ffff55;
+   font-weight: bold;
+}
+
+div.jsterm .dir, div.jsterm .dir a {
+   color: #5555ff;
+   font-weight: bold;
+}
+
+div.jsterm .link, div.jsterm .link a {
+   color: #5555ff;
+   font-weight: bold;
+}
+
+div.jsterm .exec, div.jsterm .exec a {
+   color: #55ff55;
+   font-weight: bold;
+}
+
+div.jsterm .img, div.jsterm .img a {
+   color: #ff55ff;
+   font-weight: bold;
+}
+
+#blinker {
+    line-height: .9em;
+}

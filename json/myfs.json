@@ -1,0 +1,88 @@
+{
+   "name": "~",
+   "type": "dir",
+   "contents": [
+      {
+         "name": "README",
+         "type": "text",
+         "contents": "My name is Clark DuVall. I am a Software Engineer at <a class=\"exec\" target=\"_blank\" href=\"http://betterworks.com\">BetterWorks</a>. This is my website.<br/>You can find the source code to make your very own on <a class=\"exec\" target=\"_blank\" href=\"http://github.com/clarkduvall/jsterm\">GitHub</a>.<br/><br/>If you need help, type \"help\".<br/><br/>You can contact me at <a class=\"exec\" href='mailto:clark@clarkduvall.com'>clark@clarkduvall.com</a> or follow me on Twitter <a class=\"exec\" target=\"_blank\" href=\"https://twitter.com/theclarkatron\">@theclarkatron</a>."
+      },
+      {
+         "name": "resume",
+         "type": "exec",
+         "contents": "downloads/resume.pdf"
+      },
+      {
+         "name": "projects",
+         "type": "dir",
+         "contents": [
+            {
+               "name": "LokoApps",
+               "type": "exec",
+               "contents": "http://lokoapps.com",
+               "description": "I make apps using C++ (yes, <a class=\"exec\" target=\"_blank\" href=\"https://www.madewithmarmalade.com\">C++</a>!). Download Gravity Evolved for free - <a class=\"exec\" target=\"_blank\" href=\"https://itunes.apple.com/us/app/gravity-evolved/id627359405?mt=8\">iOS</a>, <a class=\"exec\" target=\"_blank\" href=\"https://play.google.com/store/apps/details?id=com.lokoapps.gravityevolved\">Android</a>"
+            },
+            {
+               "name": "GitHub",
+               "type": "exec",
+               "contents": "http://github.com/clarkduvall",
+               "description": "I have various projects hosted on my GitHub account (including this website)."
+            },
+            {
+               "name": "YourNameInLife",
+               "type": "exec",
+               "contents": "http://yournameinlife.com",
+               "description": "Animate your name using Conway's Game of Life."
+            },
+            {
+               "name": "Pixelator",
+               "type": "exec",
+               "contents": "http://www.pixelator.co",
+               "description": "Draw with your friends using WebSockets and HTML5 Canvas."
+            },
+            {
+               "name": "GitterPatter",
+               "type": "exec",
+               "contents": "http://gitterpatter.com",
+               "description": "Watch GitHub events rain down from the heavens."
+            },
+            {
+               "name": "Trees",
+               "type": "exec",
+               "contents": "http://clarkduvall.github.io/trees/",
+               "description": "Grow trees in your browser."
+            },
+            {
+               "name": "SwissPosters",
+               "type": "exec",
+               "contents": "http://swisspostergenerator.com",
+               "description": "I helped my brother make a Swiss style poster generator."
+            },
+            {
+               "name": "JSOL",
+               "type": "exec",
+               "contents": "http://jsol.org",
+               "description": "(JavaScript Object Language) An experimental language I wrote."
+            },
+            {
+               "name": "MoveJS",
+               "type": "exec",
+               "contents": "http://clarkduvall.github.io/move/",
+               "description": "Small JS library for creating particle systems with HTML canvas."
+            }
+         ]
+      },
+      {
+         "name": "images",
+         "type": "dir",
+         "contents": [
+            {
+               "name": "pic.jpg",
+               "type": "img",
+               "contents": "images/pic.jpg",
+               "caption": "(I'm the one on the right.)"
+            }
+         ]
+      }
+   ]
+}
