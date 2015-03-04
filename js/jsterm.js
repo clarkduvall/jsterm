@@ -444,10 +444,10 @@
             this._prompt();
          // Ctrl+L
          } else if (key == 76 && e.ctrlKey) {
-            var buffer = this.stdout().innerHTML;
+            var buffer = stdout.innerHTML;
             this.commands.clear([], function () {
                 this._prompt();
-                this.stdout().innerHTML = buffer;
+                stdout.innerHTML = buffer;
             }.bind(this));
          }
       },
