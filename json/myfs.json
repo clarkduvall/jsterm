@@ -5,7 +5,7 @@
       {
          "name": "README",
          "type": "text",
-         "contents": "My name is Clark DuVall. I am a Software Engineer at <a class=\"exec\" target=\"_blank\" href=\"http://betterworks.com\">BetterWorks</a>. This is my website.<br/>You can find the source code to make your very own on <a class=\"exec\" target=\"_blank\" href=\"http://github.com/clarkduvall/jsterm\">GitHub</a>.<br/><br/>If you need help, type \"help\".<br/><br/>You can contact me at <a class=\"exec\" href='mailto:clark@clarkduvall.com'>clark@clarkduvall.com</a> or follow me on Twitter <a class=\"exec\" target=\"_blank\" href=\"https://twitter.com/theclarkatron\">@theclarkatron</a>."
+         "contents": "My name is Clark DuVall. I am a Software Engineer at <a class=\"exec\" target=\"_blank\" href=\"http://betterworks.com\">BetterWorks</a>. This is my website.<br/>You can find the source code to make your very own on <a class=\"exec\" target=\"_blank\" href=\"http://github.com/clarkduvall/jsterm\">GitHub</a>.<br/><br/>If you need help, type \"help\".<br/><br/>You can contact me by <a class=\"exec\" href='mailto:clark.duvall@gmail.com'>email</a> or follow me on Twitter <a class=\"exec\" target=\"_blank\" href=\"https://twitter.com/theclarkatron\">@theclarkatron</a>."
       },
       {
          "name": "resume",
