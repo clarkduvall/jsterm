@@ -29,6 +29,18 @@
                "description": "I have various projects hosted on my GitHub account (including this website)."
             },
             {
+               "name": "serpy",
+               "type": "exec",
+               "contents": "http://serpy.readthedocs.org/",
+               "description": "A performant serialization library for Python used in production at BetterWorks. Similar interface to Django Rest Framework serializers or Marshmallow serializers."
+            },
+            {
+               "name": "HyperLogLog",
+               "type": "exec",
+               "contents": "https://github.com/clarkduvall/hyperloglog",
+               "description": "A Go library for the Hyperloglog and Hyperloglog++ algorithms."
+            },
+            {
                "name": "YourNameInLife",
                "type": "exec",
                "contents": "http://yournameinlife.com",
@@ -56,7 +68,7 @@
                "name": "NackerHews",
                "type": "exec",
                "contents": "http://www.nackerhews.com",
-               "description": "<a class=\"exec\" target=\"_blank\" href=\"https://en.wikipedia.org/wiki/Spoonerism\">Spoonerized</a> version of Hacker News. Source on <a class=\"exec\" target=\"_blank\" href=\"https://github.com/clarkduvall/spoonerizer\">GitHub</a>."
+               "description": "<a class=\"exec\" target=\"_blank\" href=\"https://en.wikipedia.org/wiki/Spoonerism\">Spoonerized</a> version of Hacker News written using Go. Source on <a class=\"exec\" target=\"_blank\" href=\"https://github.com/clarkduvall/spoonerizer\">GitHub</a>."
             },
             {
                "name": "SwissPosters",
