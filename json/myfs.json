@@ -32,7 +32,7 @@
                "name": "serpy",
                "type": "exec",
                "contents": "http://serpy.readthedocs.org/",
-               "description": "A performant serialization library for Python used in production at BetterWorks. Similar interface to Django Rest Framework serializers or Marshmallow serializers."
+               "description": "A performant serialization library for Python used in production at BetterWorks."
             },
             {
                "name": "HyperLogLog",
