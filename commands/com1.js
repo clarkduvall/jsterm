@@ -15,8 +15,7 @@
 var COMMANDS = COMMANDS || {};
 
 COMMANDS.cat =  function(argv, cb) {
-   var filenames = this._terminal.parseArgs(argv).filenames,
-       stdout;
+   var filenames = this._terminal.parseArgs(argv).filenames,stdout;
 
    this._terminal.scroll();
    if (!filenames.length) {
@@ -209,4 +208,61 @@ COMMANDS.help = function(argv, cb) {
          this._terminal.write(c + '  ');
    }
    cb();
+}
+COMMANDS.man =  function(argv, cb) {
+   var validManPages = ["cat",
+      "cd",
+      "clear",
+      "echo",
+      "gimp",
+      "help",
+      "man",
+      "mkdir",
+      "ls",
+      "sudo",
+      "login",
+      "tree"];
+      var term = this._terminal;
+
+      function isInArray(validManPages, com)
+      {
+         return validManPages.indexOf(com.toLowerCase()) > -1;
+      }
+      var result = this._terminal.parseArgs(argv),
+
+      filename = result.filenames[0];
+
+      entry = filename;
+
+
+      this._terminal.scroll();
+      outputManPage = function(e, str) {
+        // if (this._terminal.commands.hasOwnProperty(e)){
+         if (isInArray(validManPages,e)){ 
+            //this.write('exists');
+            var ajax = new XMLHttpRequest();
+            ajax.onreadystatechange = function() {
+               if (ajax.readyState == 4 && ajax.status == 200){
+                  term.write(ajax.responseText);
+                  cb();
+               }
+            };//closes function
+            ajax.open('GET', 'json/manPages/'+e, true);
+            ajax.send();
+         }
+         else
+            {
+               term.write('No manual entry for ' + e);
+               cb();
+            }
+      }.bind(this._terminal);//closes function
+
+      if (!entry){
+         this._terminal.write('What manual page do you want?');
+         cb();
+      }
+      else {
+         // could be in a loop for multiple man pages
+         outputManPage(entry, filename);
+      }
 }
