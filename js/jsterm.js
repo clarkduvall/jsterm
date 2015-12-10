@@ -72,12 +72,21 @@
             cb();
       },
 
+      getFS: function(name,cb){
+         loadFS(name, function(responseText) {
+            return JSON.parse(responseText);
+         }.bind(this));
+      },
       loadFS: function(name, cb) {
          loadFS(name, function(responseText) {
             this.fs = JSON.parse(responseText);
             this._addDirs(this.fs, this.fs);
             cb && cb();
          }.bind(this));
+      },
+      loadFSFromString: function(responseText,cb) {
+            this._addDirs(this.fs, this.fs);
+            if (cb) cb();
       },
 
       loadCommands: function(commands) {
@@ -490,7 +499,6 @@
    String.prototype.startswith = function(s) {
       return this.indexOf(s) == 0;
    }
-
    var term = Object.create(Terminal);
    term.init(CONFIG, '/json/sample.json', COMMANDS, function() {
       term.enqueue('login')

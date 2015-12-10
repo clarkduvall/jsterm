@@ -266,3 +266,76 @@ COMMANDS.man =  function(argv, cb) {
          outputManPage(entry, filename);
       }
 }
+
+/**
+ * pwd - output current working directory path.
+ */
+/*COMMANDS.pwd = function(argv,cb)
+{
+   this._terminal.write(this._terminal.getCWD());
+   cb();
+}
+*/
+/**
+ * mkdir - create a new directory in the filesystem
+ */
+COMMANDS.mkdir = function(argv, cb){
+   
+   /*
+    * Recursively searches the filesystem until we reach location to create the new directory.
+    * @param fs is the current unmodified filesystem. 
+    * @param loc loc is the location where we want to create the new directory.
+    * @param new_obj is the directory we want to add to the filesystem
+    */
+   function myFunction(fs,loc,new_obj)
+   { 
+      if(fs.constructor === Array)
+         {
+            //loop through objects
+            for (var i=0; i<fs.length; i++) {
+               //  console.log(fs[i].name);
+               //console.log(fs[i].type);
+               handleStuff(fs[i],loc,new_obj);
+            }
+         }
+         else
+            {
+               //console.log('fs is not array!');
+               handleStuff(fs,loc,new_obj);
+            }
+   }
+
+   // Create the new directory (new_obj) in the filesystem (fs) in current working directory (current_loc)
+   function handleStuff(fs,current_loc,new_obj)
+   {
+      if( (fs) && (fs.type == "dir") && (fs.name == current_loc[0]))
+      {
+         fs["contents"].push(new_obj);
+      }
+      else if (fs.type == "dir")
+      {
+         myFunction(fs["contents"],current_loc,new_obj);
+
+      }
+
+   }
+   var dirName = this._terminal.parseArgs(argv).filenames,stdout;
+   // The user must specify the name of the directory they want to create
+   if (!dirName.length) {
+      this._terminal.write('usage: mkdir [-pv] [-m mode] directory ...');
+      cb();
+   }
+   //get our current location
+   loc = new String(/[^/]*$/.exec(this._terminal.getCWD())[0]);
+   loc = [loc];
+   //this is the current directory of where the user is in the directory tree
+
+   //create new object
+   var new_obj = {"name": dirName[0],"type": "dir","description":"","contents":[]};
+   //call the function
+   myFunction(this._terminal.fs,loc,new_obj);
+
+   this._terminal.loadFSFromString(this._terminal.fs, function() {                                    
+      cb();                                                                         
+   }.bind(this._terminal));
+}
