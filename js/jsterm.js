@@ -500,7 +500,7 @@
       return this.indexOf(s) == 0;
    }
    var term = Object.create(Terminal);
-   term.init(CONFIG, '/json/sample.json', COMMANDS, function() {
+   term.init(CONFIG, 'json/sample.json', COMMANDS, function() {
       term.enqueue('login')
           .enqueue('clark')
           .enqueue('******')
