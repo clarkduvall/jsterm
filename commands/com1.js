@@ -131,7 +131,23 @@ COMMANDS.clear = function(argv, cb) {
    this._terminal.div.innerHTML = '';
    cb();
 }
-
+/**
+* echo - display a line of text.
+*/
+COMMANDS.echo = function(argv, cb) {
+   var outputs = this._terminal.parseArgs(argv).filenames;
+   if (!outputs){
+         output = '<br>';
+         this._terminal.write(output);
+   }
+   else{
+      outputs.forEach(function(output, i) {
+         this._terminal.write(output);
+         this._terminal.write(' ');
+      }, this);
+   }
+   cb();
+}
 COMMANDS.sudo = function(argv, cb) {
    var count = 0;
    this._terminal.returnHandler = function() {
@@ -166,7 +182,7 @@ COMMANDS.login = function(argv, cb) {
 
 COMMANDS.tree = function(argv, cb) {
    var term = this._terminal,
-       home;
+   home;
 
    function writeTree(dir, level) {
       dir.contents.forEach(function(entry) {
@@ -175,7 +191,7 @@ COMMANDS.tree = function(argv, cb) {
          if (entry.name.startswith('.'))
             return;
          for (var i = 0; i < level; i++)
-            str += '|  ';
+         str += '|  ';
          str += '|&mdash;&mdash;';
          term.write(str);
          term.writeLink(entry, term.dirString(dir) + '/' + entry.name);
@@ -193,21 +209,21 @@ COMMANDS.tree = function(argv, cb) {
 
 COMMANDS.help = function(argv, cb) {
    this._terminal.write(
-       'You can navigate either by clicking on anything that ' +
-       '<a href="javascript:void(0)">underlines</a> when you put your mouse ' +
-       'over it, or by typing commands in the terminal. Type the name of a ' +
-       '<span class="exec">link</span> to view it. Use "cd" to change into a ' +
-       '<span class="dir">directory</span>, or use "ls" to list the contents ' +
-       'of that directory. The contents of a <span class="text">file</span> ' +
-       'can be viewed using "cat". <span class="img">Images</span> are ' +
-       'displayed using "gimp".<br><br>If there is a command you want to get ' +
-       'out of, press Ctrl+C or Ctrl+D.<br><br>');
-   this._terminal.write('Commands are:<br>');
-   for (var c in this._terminal.commands) {
-      if (this._terminal.commands.hasOwnProperty(c) && !c.startswith('_'))
-         this._terminal.write(c + '  ');
-   }
-   cb();
+      'You can navigate either by clicking on anything that ' +
+      '<a href="javascript:void(0)">underlines</a> when you put your mouse ' +
+      'over it, or by typing commands in the terminal. Type the name of a ' +
+      '<span class="exec">link</span> to view it. Use "cd" to change into a ' +
+      '<span class="dir">directory</span>, or use "ls" to list the contents ' +
+      'of that directory. The contents of a <span class="text">file</span> ' +
+      'can be viewed using "cat". <span class="img">Images</span> are ' +
+      'displayed using "gimp".<br><br>If there is a command you want to get ' +
+      'out of, press Ctrl+C or Ctrl+D.<br><br>');
+      this._terminal.write('Commands are:<br>');
+      for (var c in this._terminal.commands) {
+         if (this._terminal.commands.hasOwnProperty(c) && !c.startswith('_'))
+            this._terminal.write(c + '  ');
+      }
+      cb();
 }
 COMMANDS.man =  function(argv, cb) {
    var validManPages = ["cat",
@@ -237,7 +253,7 @@ COMMANDS.man =  function(argv, cb) {
 
       this._terminal.scroll();
       outputManPage = function(e, str) {
-        // if (this._terminal.commands.hasOwnProperty(e)){
+         // if (this._terminal.commands.hasOwnProperty(e)){
          if (isInArray(validManPages,e)){ 
             //this.write('exists');
             var ajax = new XMLHttpRequest();
@@ -271,16 +287,16 @@ COMMANDS.man =  function(argv, cb) {
  * pwd - output current working directory path.
  */
 /*COMMANDS.pwd = function(argv,cb)
-{
-   this._terminal.write(this._terminal.getCWD());
-   cb();
-}
-*/
+  {
+  this._terminal.write(this._terminal.getCWD());
+  cb();
+  }
+  */
 /**
  * mkdir - create a new directory in the filesystem
  */
 COMMANDS.mkdir = function(argv, cb){
-   
+
    /*
     * Recursively searches the filesystem until we reach location to create the new directory.
     * @param fs is the current unmodified filesystem. 
@@ -309,14 +325,14 @@ COMMANDS.mkdir = function(argv, cb){
    function handleStuff(fs,current_loc,new_obj)
    {
       if( (fs) && (fs.type == "dir") && (fs.name == current_loc[0]))
-      {
-         fs["contents"].push(new_obj);
-      }
-      else if (fs.type == "dir")
-      {
-         myFunction(fs["contents"],current_loc,new_obj);
+         {
+            fs["contents"].push(new_obj);
+         }
+         else if (fs.type == "dir")
+            {
+               myFunction(fs["contents"],current_loc,new_obj);
 
-      }
+            }
 
    }
    var dirName = this._terminal.parseArgs(argv).filenames,stdout;
