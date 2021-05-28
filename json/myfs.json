@@ -17,12 +17,6 @@
          "type": "dir",
          "contents": [
             {
-               "name": "LokoApps",
-               "type": "exec",
-               "contents": "http://lokoapps.com",
-               "description": "I make apps using C++ (yes, <a class=\"exec\" target=\"_blank\" href=\"https://www.madewithmarmalade.com\">C++</a>!). Download Gravity Evolved for free - <a class=\"exec\" target=\"_blank\" href=\"https://itunes.apple.com/us/app/gravity-evolved/id627359405?mt=8\">iOS</a>, <a class=\"exec\" target=\"_blank\" href=\"https://play.google.com/store/apps/details?id=com.lokoapps.gravityevolved\">Android</a>"
-            },
-            {
                "name": "GitHub",
                "type": "exec",
                "contents": "http://github.com/clarkduvall",
@@ -71,12 +65,6 @@
                "description": "<a class=\"exec\" target=\"_blank\" href=\"https://en.wikipedia.org/wiki/Spoonerism\">Spoonerized</a> version of Hacker News written using Go. Source on <a class=\"exec\" target=\"_blank\" href=\"https://github.com/clarkduvall/spoonerizer\">GitHub</a>."
             },
             {
-               "name": "SwissPosters",
-               "type": "exec",
-               "contents": "http://swisspostergenerator.com",
-               "description": "I helped my brother make a Swiss style poster generator."
-            },
-            {
                "name": "JSOL",
                "type": "exec",
                "contents": "http://jsol.org",
@@ -87,6 +75,12 @@
                "type": "exec",
                "contents": "http://clarkduvall.github.io/move/",
                "description": "Small JS library for creating particle systems with HTML canvas."
+            },
+            {
+               "name": "LokoApps",
+               "type": "exec",
+               "contents": "http://lokoapps.com",
+               "description": "I make apps using C++ (yes, <a class=\"exec\" target=\"_blank\" href=\"https://www.madewithmarmalade.com\">C++</a>!). Download Gravity Evolved for free - <a class=\"exec\" target=\"_blank\" href=\"https://itunes.apple.com/us/app/gravity-evolved/id627359405?mt=8\">iOS</a>, <a class=\"exec\" target=\"_blank\" href=\"https://play.google.com/store/apps/details?id=com.lokoapps.gravityevolved\">Android</a>"
             }
          ]
       },
