@@ -10,7 +10,7 @@
       {
          "name": "resume",
          "type": "exec",
-         "contents": "downloads/resume.pdf"
+         "contents": "https://www.linkedin.com/in/clark-duvall-108bb344/"
       },
       {
          "name": "projects",
