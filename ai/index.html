@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Experiments Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Use the Inter font */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Tailwind gray-50 */
+        }
+
+        /* Whimsical animation for the quote */
+        @keyframes whimsical-fade-in {
+            0% {
+                opacity: 0;
+                transform: scale(0.95) translateY(5px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .quote-animate {
+            animation: whimsical-fade-in 0.6s ease-out forwards;
+        }
+
+        /* Style for status emojis in the compact view */
+        .compact-status-emoji {
+            font-size: 1rem;
+            display: inline-block;
+            vertical-align: middle;
+            width: 1.2em;
+            text-align: center;
+            line-height: 1;
+        }
+
+        /* Style for capability emojis */
+        .capability-emoji {
+            font-size: 0.9rem; /* Slightly smaller */
+            margin-right: 0.15rem; /* Spacing between icons */
+        }
+
+        /* Tooltip styles */
+        .tooltip {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 160px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 8px;
+            position: absolute;
+            z-index: 10;
+            bottom: 140%;
+            left: 50%;
+            margin-left: -80px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.75rem;
+            line-height: 1rem;
+            white-space: nowrap;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 antialiased">
+    <div class="container mx-auto px-4 py-8 max-w-3xl">
+
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-blue-600 mb-2">Welcome to the AI Experiments Hub!</h1>
+            <p class="text-lg text-gray-600">Exploring the possibilities of on-device AI with the Prompt API.</p>
+        </header>
+
+        <section class="mb-8 bg-white p-5 rounded-lg shadow-md border border-gray-200">
+             <div class="flex justify-between items-center mb-3">
+                 <h2 class="text-xl font-semibold text-gray-700">API Status</h2>
+                 <div class="flex items-center space-x-3" id="api-status-compact">
+                    <span id="api-overall-status" class="tooltip bg-gray-100 px-2 py-1 rounded-md shadow-sm border border-gray-200">
+                        <span class="compact-status-emoji">⏳</span>
+                        <span class="text-xs ml-1.5 text-gray-700 font-medium">API</span>
+                        <span class="tooltiptext">Overall API: Checking...</span>
+                    </span>
+                     <span id="api-text-status" class="tooltip bg-gray-100 px-2 py-1 rounded-md shadow-sm border border-gray-200">
+                        <span class="compact-status-emoji">⏳</span>
+                        <span class="text-xs ml-1.5 text-gray-700 font-medium">Text</span>
+                        <span class="tooltiptext">Text: Checking...</span>
+                    </span>
+                     <span id="api-image-status" class="tooltip bg-gray-100 px-2 py-1 rounded-md shadow-sm border border-gray-200">
+                        <span class="compact-status-emoji">⏳</span>
+                        <span class="text-xs ml-1.5 text-gray-700 font-medium">Image</span>
+                        <span class="tooltiptext">Image: Checking...</span>
+                    </span>
+                     <span id="api-audio-status" class="tooltip bg-gray-100 px-2 py-1 rounded-md shadow-sm border border-gray-200">
+                        <span class="compact-status-emoji">⏳</span>
+                        <span class="text-xs ml-1.5 text-gray-700 font-medium">Audio</span>
+                        <span class="tooltiptext">Audio: Checking...</span>
+                    </span>
+                 </div>
+            </div>
+             <p id="api-status-message" class="text-xs text-gray-500 h-4"></p>
+        </section>
+
+        <section class="mb-8 bg-white p-6 rounded-lg shadow-md border border-gray-200">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">Explore Experiments</h2>
+            <ul id="experiments-list" class="space-y-3">
+                </ul>
+             <p id="experiments-loading" class="text-sm text-gray-500">Checking experiment compatibility...</p>
+             </section>
+
+        <section id="quote-section" class="mb-12 text-center hidden">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">AI-Generated Wisdom (of sorts)</h2>
+            <div class="bg-gradient-to-r from-blue-100 to-purple-100 p-6 rounded-lg shadow-lg min-h-[100px] flex items-center justify-center border border-blue-200 relative overflow-hidden">
+                <p id="quote-display" class="text-xl italic text-gray-800 px-4 relative z-10"></p>
+            </div>
+        </section>
+
+        <footer class="text-center mt-12 text-sm text-gray-500">
+            <p>Built with the experimental Prompt API.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const getEl = (id) => document.getElementById(id);
+
+        // --- Status & Capability Emojis ---
+        const statusEmojis = {
+            available: '✅', downloadable: '⬇️', downloading: '⏳', unavailable: '❌', checking: '⏳'
+        };
+        const capabilityEmojis = {
+            text: '📝', image: '🖼️', audio: '🎤'
+        };
+
+        // --- State ---
+        let languageModelSession = null;
+        let quoteIntervalId = null;
+        let capabilityStatus = { text: 'checking', image: 'checking', audio: 'checking' };
+        let isGeneratingQuote = false;
+
+        // --- Experiment Data ---
+        const experiments = [
+            { id: 'critic', href: 'critic.html', title: 'AI Art Critic', capabilities: ['text', 'image'] },
+            { id: 'conversation', href: 'conversation.html', title: 'Live Audio Chat', capabilities: ['text', 'audio'] },
+            { id: 'task', href: 'task.html', title: 'AI Task Assistant', capabilities: ['text'] },
+            { id: 'website', href: 'website.html', title: 'AI Website Prototyper', capabilities: ['text'] },
+            { id: 'adventure', href: 'adventure.html', title: 'AI Text Adventure', capabilities: ['text'] }
+        ];
+
+
+        // --- Helper Functions ---
+
+        function updateCompactStatus(elementId, capabilityName, status, message = '') {
+            try {
+                const element = getEl(elementId);
+                if (!element) return;
+                const emojiEl = element.querySelector('.compact-status-emoji');
+                const tooltipTextEl = element.querySelector('.tooltiptext');
+                if (!emojiEl || !tooltipTextEl) return;
+
+                const emoji = statusEmojis[status] || statusEmojis.checking;
+                emojiEl.textContent = emoji;
+
+                let statusText = status.charAt(0).toUpperCase() + status.slice(1);
+                if (status === 'downloadable') statusText = 'Available (Download Required)';
+                if (status === 'downloading') statusText = 'Downloading...';
+                if (status === 'unavailable') statusText = 'Not Available';
+                if (status === 'checking') statusText = 'Checking...';
+
+                tooltipTextEl.textContent = `${capabilityName}: ${statusText}${message ? ` (${message})` : ''}`;
+
+            } catch (error) {
+                console.error(`Error updating compact status for ${elementId}:`, error);
+            }
+        }
+
+        async function checkCapability(elementId, capabilityKey, capabilityName, options) {
+            capabilityStatus[capabilityKey] = 'checking';
+            updateCompactStatus(elementId, capabilityName, 'checking');
+            try {
+                if (typeof LanguageModel === 'undefined' || !LanguageModel.availability) {
+                    throw new Error('LanguageModel API not found or availability method missing.');
+                }
+                const availability = await LanguageModel.availability(options);
+                capabilityStatus[capabilityKey] = availability;
+                updateCompactStatus(elementId, capabilityName, availability);
+                return availability;
+            } catch (error) {
+                console.error(`Error checking ${capabilityName} availability:`, error);
+                capabilityStatus[capabilityKey] = 'unavailable';
+                updateCompactStatus(elementId, capabilityName, 'unavailable', 'Error');
+                const statusMessageEl = getEl('api-status-message');
+                 if (statusMessageEl && !statusMessageEl.textContent.includes('Error checking API status')) {
+                     statusMessageEl.textContent = `Error checking ${capabilityName}: ${error.message}.`;
+                 }
+                return 'unavailable';
+            }
+        }
+
+        async function generateWelcomeMessage(session) {
+            const fallbackMessage = "Prompt API is ready to roll!";
+            if (!session) return fallbackMessage;
+            try {
+                console.log("Generating welcome message...");
+                const prompt = "Generate a short (10-15 words), funny, slightly quirky message congratulating the user that the Prompt API is working on their device.";
+                const message = await session.prompt(prompt);
+                console.log("Welcome message generated:", message);
+                return message || fallbackMessage;
+            } catch (error) {
+                console.error("Error generating welcome message:", error);
+                return fallbackMessage;
+            }
+        }
+
+        async function generateQuote() {
+            if (isGeneratingQuote) return;
+            const quoteDisplayEl = getEl('quote-display');
+            if (!quoteDisplayEl) return;
+            if (!languageModelSession) {
+                if (!quoteDisplayEl.textContent) quoteDisplayEl.textContent = "Waiting for AI model...";
+                return;
+            }
+            isGeneratingQuote = true;
+            try {
+                const promptText = "Generate a short, funny, slightly absurd inspirational quote (max 20 words).";
+                const newQuote = await languageModelSession.prompt(promptText);
+                if (newQuote) {
+                    quoteDisplayEl.classList.remove('quote-animate');
+                    void quoteDisplayEl.offsetWidth;
+                    quoteDisplayEl.textContent = newQuote;
+                    quoteDisplayEl.classList.add('quote-animate');
+                } else { console.warn("Generated quote was empty."); }
+            } catch (error) { console.error("Error generating quote:", error); }
+            finally { isGeneratingQuote = false; }
+        }
+
+        function updateExperimentsList() {
+            const listEl = getEl('experiments-list');
+            const loadingEl = getEl('experiments-loading');
+            if (!listEl || !loadingEl) return;
+
+            listEl.innerHTML = '';
+
+            experiments.forEach(exp => {
+                let allCapsAvailable = true;
+                let capsHtml = '';
+
+                exp.capabilities.forEach(capKey => {
+                    const status = capabilityStatus[capKey];
+                    const emoji = capabilityEmojis[capKey] || '?';
+                    const isAvailable = status !== 'unavailable';
+
+                    if (!isAvailable) {
+                        allCapsAvailable = false;
+                        capsHtml += `<span class="capability-emoji text-red-500" title="${capKey.charAt(0).toUpperCase() + capKey.slice(1)}: Unavailable">${emoji}</span>`;
+                    } else {
+                        capsHtml += `<span class="capability-emoji" title="${capKey.charAt(0).toUpperCase() + capKey.slice(1)}: Available">${emoji}</span>`;
+                    }
+                });
+
+                const li = document.createElement('li');
+                li.className = 'flex items-center justify-between border-b border-gray-100 pb-2';
+
+                const link = document.createElement('a');
+                link.href = exp.href;
+                link.id = `exp-${exp.id}-link`;
+                link.textContent = exp.title;
+                link.className = 'transition duration-150 ease-in-out';
+
+                if (allCapsAvailable) {
+                    link.classList.add('text-blue-600', 'hover:text-blue-800');
+                } else {
+                    link.classList.add('text-gray-400', 'hover:text-gray-500');
+                }
+
+                const capsSpan = document.createElement('span');
+                capsSpan.id = `exp-${exp.id}-caps`;
+                capsSpan.className = 'text-sm ml-2 flex-shrink-0';
+                capsSpan.innerHTML = capsHtml;
+
+                li.appendChild(link);
+                li.appendChild(capsSpan);
+                listEl.appendChild(li);
+            });
+
+            loadingEl.style.display = 'none';
+        }
+
+
+        // --- Initialization ---
+        async function initialize() {
+            console.log("Initializing AI Experiments Hub...");
+            const statusMessageEl = getEl('api-status-message');
+            const quoteSectionEl = getEl('quote-section');
+            const experimentsLoadingEl = getEl('experiments-loading');
+
+            if (!statusMessageEl || !quoteSectionEl || !getEl('api-overall-status') || !experimentsLoadingEl) {
+                console.error("Essential DOM elements for initialization are missing. Aborting.");
+                if (statusMessageEl) statusMessageEl.textContent = "Page structure error.";
+                return;
+             }
+
+            try {
+                let overallApiAvailable = false;
+                if (typeof LanguageModel !== 'undefined' && LanguageModel.create && LanguageModel.availability) {
+                    updateCompactStatus('api-overall-status', 'Overall API', 'available');
+                    statusMessageEl.textContent = "Checking capabilities...";
+                    overallApiAvailable = true;
+                } else {
+                    console.warn("LanguageModel API not found or incomplete.");
+                    updateCompactStatus('api-overall-status', 'Overall API', 'unavailable', 'Not found');
+                    capabilityStatus = { text: 'unavailable', image: 'unavailable', audio: 'unavailable' };
+                    updateCompactStatus('api-text-status', 'Text', 'unavailable');
+                    updateCompactStatus('api-image-status', 'Image', 'unavailable');
+                    updateCompactStatus('api-audio-status', 'Audio', 'unavailable');
+                    statusMessageEl.textContent = "Prompt API not available or not enabled.";
+                    updateExperimentsList();
+                    return;
+                }
+
+                await Promise.all([
+                    checkCapability('api-text-status', 'text', 'Text', { expectedInputs: [{ type: 'text' }] }),
+                    checkCapability('api-image-status', 'image', 'Image', { expectedInputs: [{ type: 'image' }] }),
+                    checkCapability('api-audio-status', 'audio', 'Audio', { expectedInputs: [{ type: 'audio' }] })
+                ]);
+
+                updateExperimentsList();
+
+                const textStatus = capabilityStatus['text'];
+                const isTextApiUsable = (textStatus === 'available' || textStatus === 'downloadable' || textStatus === 'downloading');
+
+                if (isTextApiUsable) {
+                    quoteSectionEl.classList.remove('hidden');
+                    try {
+                        if(textStatus === 'downloadable' || textStatus === 'downloading') {
+                            updateCompactStatus('api-text-status', 'Text', 'downloading');
+                            statusMessageEl.textContent = "Downloading text model...";
+                        } else {
+                            statusMessageEl.textContent = "Initializing AI session...";
+                        }
+
+                        languageModelSession = await LanguageModel.create({
+                            monitor(m) {
+                                m.addEventListener("downloadprogress", e => {
+                                    const progress = Math.round(e.loaded * 100);
+                                    updateCompactStatus('api-text-status', 'Text', 'downloading', `${progress}%`);
+                                    statusMessageEl.textContent = `Downloading text model: ${progress}%`;
+                                });
+                             }
+                        });
+
+                        updateCompactStatus('api-text-status', 'Text', 'available');
+                        console.log("LanguageModel session created successfully.");
+
+                        statusMessageEl.textContent = "Generating welcome message...";
+                        const welcomeMsg = await generateWelcomeMessage(languageModelSession);
+                        statusMessageEl.textContent = welcomeMsg;
+
+                        await generateQuote();
+
+                        if (quoteIntervalId) clearInterval(quoteIntervalId);
+                        quoteIntervalId = setInterval(generateQuote, 10000);
+
+                    } catch (sessionError) {
+                        console.error("Failed to create LanguageModel session:", sessionError);
+                        statusMessageEl.textContent = `Failed to initialize AI model: ${sessionError.message}`;
+                        const quoteDisplayEl = getEl('quote-display');
+                        if (quoteDisplayEl) quoteDisplayEl.textContent = "Could not initialize the AI model.";
+                        updateCompactStatus('api-text-status', 'Text', 'unavailable', 'Init failed');
+                        capabilityStatus['text'] = 'unavailable';
+                        updateExperimentsList();
+                        quoteSectionEl.classList.add('hidden');
+                    }
+                } else {
+                    if (!statusMessageEl.textContent.toLowerCase().includes('error')) {
+                        statusMessageEl.textContent = "Text generation not available, quote generator disabled.";
+                    }
+                    quoteSectionEl.classList.add('hidden');
+                }
+
+            } catch (initError) {
+                 console.error("Error during initialization:", initError);
+                 if (statusMessageEl) statusMessageEl.textContent = `Initialization error: ${initError.message}`;
+                 capabilityStatus = { text: 'unavailable', image: 'unavailable', audio: 'unavailable' };
+                 updateCompactStatus('api-overall-status', 'Overall API', 'unavailable', 'Error');
+                 updateCompactStatus('api-text-status', 'Text', 'unavailable');
+                 updateCompactStatus('api-image-status', 'Image', 'unavailable');
+                 updateCompactStatus('api-audio-status', 'Audio', 'unavailable');
+                 updateExperimentsList();
+            } finally {
+                 console.log("Initialization sequence complete.");
+            }
+        }
+
+        // --- Run Initialization on Load ---
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initialize);
+        } else {
+            initialize();
+        }
+
+    </script>
+</body>
+</html>
