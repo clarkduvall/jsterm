@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Audio Conversational AI</title>
+    <script src="https://cdn.tailwindcss.com"></script> <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Simple animation for the listening indicator */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .listening-indicator {
+            animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        /* Styling for chat bubbles */
+        .chat-bubble {
+            padding: 0.75rem 1rem; /* p-3 */
+            border-radius: 0.5rem; /* rounded-lg */
+            margin-bottom: 0.5rem; /* mb-2 */
+            max-width: 80%;
+            word-wrap: break-word;
+            min-height: 3rem; /* Ensure bubble has some height even when empty initially */
+        }
+        .user-bubble {
+            background-color: #E0F2FE; /* bg-sky-100 */
+            color: #0C4A6E; /* text-sky-800 */
+            margin-left: auto;
+            text-align: right;
+        }
+        .assistant-bubble {
+            background-color: #F3F4F6; /* bg-gray-100 */
+            color: #374151; /* text-gray-700 */
+            margin-right: auto;
+            text-align: left;
+        }
+         .error-bubble {
+            background-color: #FEE2E2; /* bg-red-100 */
+            color: #991B1B; /* text-red-800 */
+            margin-right: auto;
+            text-align: left;
+            font-style: italic;
+        }
+        /* Add cursor pointer for specific states */
+        .clickable-status {
+             cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl flex flex-col h-[90vh]">
+        <h1 class="text-2xl font-semibold mb-4 text-gray-800 text-center">Live Audio Conversational AI</h1>
+
+        <div id="status" class="mb-2 p-3 rounded-md text-white transition-colors duration-300 text-center flex-shrink-0 flex items-center justify-center">
+             <span id="status-text">Initializing...</span>
+             <span id="listening-dot" class="inline-block w-3 h-3 bg-red-500 rounded-full ml-2 listening-indicator hidden"></span>
+             <button id="cancel-button" class="ml-auto bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-xs hidden flex-shrink-0">
+                Cancel
+             </button>
+        </div>
+
+        <div class="flex items-center justify-center mb-4 text-sm text-gray-600 flex-shrink-0">
+            <input type="checkbox" id="interrupt-toggle" class="mr-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" checked>
+            <label for="interrupt-toggle">Interrupt speech with noise</label>
+        </div>
+
+
+        <div class="flex-grow mt-0 p-4 border border-gray-200 rounded-lg bg-white overflow-y-auto flex flex-col-reverse">
+            <div id="conversation-output" class="space-y-2">
+                 <p class="text-gray-500 italic text-center p-4">Conversation will appear here...</p> </div>
+        </div>
+
+         <div id="error-message" class="mt-4 p-3 rounded-md text-red-700 bg-red-100 hidden flex-shrink-0">
+             </div>
+    </div>
+
+    <script>
+        const statusDiv = document.getElementById('status');
+        const statusText = document.getElementById('status-text');
+        const listeningDot = document.getElementById('listening-dot');
+        const conversationOutput = document.getElementById('conversation-output');
+        const globalErrorDiv = document.getElementById('error-message');
+        const interruptToggle = document.getElementById('interrupt-toggle');
+        const cancelButton = document.getElementById('cancel-button');
+
+        // --- Configuration ---
+        const SILENCE_THRESHOLD = -50; // dB
+        const SILENCE_DURATION_MS = 500; // ms
+        const AUDIO_CHECK_INTERVAL_MS = 100; // ms
+        const MIN_AUDIO_DURATION_MS = 2000; // Minimum audio length (2 seconds)
+        const IGNORED_TRANSCRIPTIONS = ['[noise]', '[silence]', '<noise>']; // Lowercase list
+        const TTS_INTERRUPT_THRESHOLD = -30; // dB - Noise level to interrupt TTS
+
+        // --- State Variables ---
+        let audioContext;
+        let mediaStream;
+        let mediaRecorder;
+        let audioChunks = [];
+        let analyserNode;
+        let audioDataArray;
+        let silenceStart = null;
+        let isRecording = false;
+        let isProcessing = false;
+        let checkInterval = null;
+        let messageCount = 0;
+        let recordingStartTime = null;
+        let lastRecordingDuration = 0;
+        let llmResponseSession = null;
+        let allowTtsInterrupt = true;
+        let isInitialized = false;
+        let currentLlmAbortController = null;
+        let isManuallyStopped = false;
+
+        // --- TTS Variables ---
+        let synth = null;
+        let britishFemaleVoice = null;
+        let voicesLoaded = false;
+        let isSpeaking = false;
+        let ttsQueue = [];
+
+        // --- Utility Functions ---
+        function updateStatus(text, state = 'info') { /* (No changes) */ console.log("Status:", text); statusText.textContent = text; listeningDot.classList.add('hidden'); statusDiv.classList.remove( 'bg-blue-500', 'bg-yellow-500', 'bg-green-500', 'bg-red-500', 'bg-gray-500', 'bg-purple-500', 'bg-gray-600', 'hover:bg-blue-600', 'cursor-pointer', 'clickable-status' ); globalErrorDiv.classList.add('hidden'); switch (state) { case 'listening': statusDiv.classList.add('bg-blue-500'); listeningDot.classList.remove('hidden'); statusDiv.classList.add('clickable-status'); break; case 'processing': statusDiv.classList.add('bg-yellow-500'); break; case 'success': statusDiv.classList.add('bg-green-500'); break; case 'error': statusDiv.classList.add('bg-red-500'); globalErrorDiv.textContent = text; globalErrorDiv.classList.remove('hidden'); statusDiv.classList.add('clickable-status'); break; case 'downloading': statusDiv.classList.add('bg-purple-500'); break; case 'stopped': statusDiv.classList.add('bg-gray-600'); statusDiv.classList.add('clickable-status'); break; default: statusDiv.classList.add('bg-gray-500'); if (isInitialized) { statusDiv.classList.add('clickable-status'); } } }
+        function addConversationEntry(text, role) { /* (No changes) */ messageCount++; const messageWrapper = document.createElement('div'); const messageBubble = document.createElement('div'); const contentParagraph = document.createElement('p'); const timestampSpan = document.createElement('span'); messageBubble.classList.add('chat-bubble'); contentParagraph.classList.add('text-sm'); timestampSpan.classList.add('text-xs', 'opacity-70', 'block', 'mt-1'); const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); const content = text || (role === 'error' ? "An error occurred." : "..."); contentParagraph.textContent = content; timestampSpan.textContent = timestamp; messageBubble.appendChild(contentParagraph); messageBubble.appendChild(timestampSpan); switch (role) { case 'user': messageBubble.classList.add('user-bubble'); messageWrapper.classList.add('flex', 'justify-end'); break; case 'assistant': messageBubble.classList.add('assistant-bubble'); messageWrapper.classList.add('flex', 'justify-start'); break; case 'error': messageBubble.classList.add('error-bubble'); messageWrapper.classList.add('flex', 'justify-start'); break; } messageWrapper.appendChild(messageBubble); if (messageCount === 1) { const placeholder = conversationOutput.querySelector('p.italic'); if (placeholder) placeholder.remove(); } conversationOutput.appendChild(messageWrapper); conversationOutput.parentElement.scrollTop = conversationOutput.parentElement.scrollHeight; return contentParagraph; }
+        function displayGlobalError(message, error) { /* (No changes) */ console.error(message, error); const errorMessage = `${message}: ${error?.message || error || 'Unknown error'}`; updateStatus(errorMessage, 'error'); }
+
+        // --- TTS Functions ---
+        function loadVoices() { /* (No changes) */ if (!synth) return; const voices = synth.getVoices(); if (voices.length === 0 && !voicesLoaded) { console.log("TTS voices not ready yet, waiting for onvoiceschanged."); return; } voicesLoaded = true; console.log("Available TTS voices:", voices); britishFemaleVoice = voices.find(voice => voice.lang === 'en-GB' && voice.name.toLowerCase().includes('female')) || voices.find(voice => voice.lang === 'en-GB'); if (britishFemaleVoice) { console.log("Selected British Female Voice:", britishFemaleVoice.name); } else { console.warn("British Female (en-GB) voice not found. TTS may use default voice."); britishFemaleVoice = voices.find(voice => voice.lang === 'en-US' && voice.name.toLowerCase().includes('female')) || voices.find(voice => voice.lang === 'en-US') || voices.find(voice => voice.default); if (britishFemaleVoice) { console.log("Using fallback voice:", britishFemaleVoice.name); } } }
+        function processTtsQueue() { /* (No changes) */ if (isSpeaking || ttsQueue.length === 0 || !synth) { return; } isSpeaking = true; const utterance = ttsQueue.shift(); utterance.onend = () => { console.log('TTS utterance finished.'); isSpeaking = false; processTtsQueue(); checkAndRestartListening(); }; utterance.onerror = (event) => { if (event.error === 'interrupted') { console.log('TTS interrupted (onerror event).'); } else { console.error('SpeechSynthesisUtterance.onerror', event); addConversationEntry(`[TTS Error: ${event.error}]`, 'error'); } isSpeaking = false; processTtsQueue(); checkAndRestartListening(); }; utterance.onstart = () => { console.log('TTS utterance started.'); }; console.log(`Attempting to speak from queue: "${utterance.text}" with voice: ${utterance.voice.name} (${utterance.lang})`); synth.speak(utterance); }
+        function queueTts(text) { /* (No changes) */ const trimmedText = text ? text.trim() : ''; if (!synth) { console.warn("Speech synthesis not available."); return; } if (!voicesLoaded) { console.warn("Voices not loaded yet, cannot queue TTS."); loadVoices(); if (!britishFemaleVoice) return; } if (!britishFemaleVoice) { console.warn("No suitable voice found for TTS."); return; } if (trimmedText.length === 0) { console.log("Skipping empty text for TTS."); return; } try { const utterance = new SpeechSynthesisUtterance(trimmedText); utterance.voice = britishFemaleVoice; utterance.lang = britishFemaleVoice.lang; utterance.pitch = 1; utterance.rate = 1; ttsQueue.push(utterance); console.log(`Queued TTS: "${trimmedText}". Queue size: ${ttsQueue.length}`); processTtsQueue(); } catch (error) { console.error("Error creating utterance:", error); addConversationEntry(`[TTS Queue Error: ${error.message}]`, 'error'); } }
+
+        // --- Core Logic ---
+        async function createPromptSession(options = {}) { /* (No changes) */ if (typeof LanguageModel === 'undefined') { throw new Error("Prompt API not available."); } const availability = await LanguageModel.availability(options); if (availability === 'unavailable') { throw new Error(`Prompt API unavailable for options: ${JSON.stringify(options)}`); } if (availability === 'downloadable' || availability === 'downloading') { updateStatus("Model download needed...", 'downloading'); } else { updateStatus("Creating session...", 'info'); } const session = await LanguageModel.create({ ...options, monitor: (m) => { m.addEventListener("downloadprogress", (e) => { updateStatus(`Downloading model: ${Math.round(e.loaded * 100)}%`, 'downloading'); }); } }); updateStatus("Session ready.", 'success'); return session; }
+        async function createOrGetLlmResponseSession() { /* (No changes) */ if (llmResponseSession) { console.log("Reusing existing LLM response session."); return llmResponseSession; } console.log("Creating new persistent LLM response session."); if (typeof LanguageModel === 'undefined') { throw new Error("Prompt API not available."); } const availability = await LanguageModel.availability({}); if (availability === 'unavailable') { throw new Error(`Prompt API unavailable for text session.`); } if (availability === 'downloadable' || availability === 'downloading') { updateStatus("Model download needed for text session...", 'downloading'); } else { updateStatus("Creating text session...", 'info'); } try { llmResponseSession = await LanguageModel.create({ systemPrompt: "Keep your responses concise (1-2 sentences).", monitor: (m) => { m.addEventListener("downloadprogress", (e) => { updateStatus(`Downloading model: ${Math.round(e.loaded * 100)}%`, 'downloading'); }); } }); updateStatus("LLM Response Session ready.", 'success'); return llmResponseSession; } catch (error) { console.error("Failed to create persistent LLM response session:", error); llmResponseSession = null; throw error; } }
+        async function getLlmResponse(inputText) { /* (No changes) */ let session = null; let assistantBubbleContentEl = null; let currentSentenceBuffer = ''; let fullResponse = ''; currentLlmAbortController = new AbortController(); try { updateStatus("Getting LLM response...", 'processing'); showCancelButton(); session = await createOrGetLlmResponseSession(); assistantBubbleContentEl = addConversationEntry('...', 'assistant'); const stream = await session.promptStreaming(inputText, { signal: currentLlmAbortController.signal }); console.log("LLM stream started."); const sentenceEndRegex = /([.!?])\s+/; for await (const chunk of stream) { fullResponse += chunk; if (assistantBubbleContentEl) { assistantBubbleContentEl.textContent = fullResponse; conversationOutput.parentElement.scrollTop = conversationOutput.parentElement.scrollHeight; } currentSentenceBuffer += chunk; let match; while ((match = sentenceEndRegex.exec(currentSentenceBuffer)) !== null) { const sentenceEndIndex = match.index + match[1].length; const sentence = currentSentenceBuffer.substring(0, sentenceEndIndex).trim(); if (sentence.length > 0) { queueTts(sentence); } currentSentenceBuffer = currentSentenceBuffer.substring(sentenceEndIndex + match[0].length - match[1].length); } } console.log("LLM stream finished naturally."); const remainingText = currentSentenceBuffer.trim(); if (remainingText.length > 0) { console.log("Queueing remaining text:", remainingText); queueTts(remainingText); } updateStatus("LLM response complete.", 'success'); } catch (err) { if (err.name === 'AbortError') { console.log('LLM streaming aborted.'); updateStatus("LLM generation cancelled.", "info"); if (assistantBubbleContentEl) { assistantBubbleContentEl.textContent = fullResponse + " (Cancelled)";} } else { console.error("Failed to get LLM response:", err); if (assistantBubbleContentEl) { assistantBubbleContentEl.textContent = `Error getting response: ${err.message || err}`; assistantBubbleContentEl.parentElement.classList.add('error-bubble'); } else { addConversationEntry(`Error getting response: ${err.message || err}`, 'error'); } updateStatus("Error getting LLM response.", 'error'); if (session === llmResponseSession) { console.warn("Error occurred with persistent LLM session. Destroying it."); if(llmResponseSession) llmResponseSession.destroy(); llmResponseSession = null; } } hideCancelButton(); } finally { currentLlmAbortController = null; } }
+        async function processAudio(audioBlob) { /* (No changes) */ if (isProcessing) return; isProcessing = true; updateStatus("Transcribing audio...", 'processing'); let transcriptionSession = null; try { transcriptionSession = await createPromptSession({ expectedInputs: [{ type: 'audio' }] }); console.log(`Sending audio blob (${(audioBlob.size / 1024).toFixed(2)} KB) for transcription.`); const transcribedText = await transcriptionSession.prompt([ { role: "user", content: "Transcribe the following audio accurately:" }, { type: "audio", content: audioBlob } ]); console.log("Transcription result:", transcribedText); if (transcriptionSession) { console.log("Destroying transcription session..."); transcriptionSession.destroy(); transcriptionSession = null; } const cleanedText = transcribedText ? transcribedText.trim() : ''; const lowerText = cleanedText.toLowerCase(); if (cleanedText.length === 0 || IGNORED_TRANSCRIPTIONS.includes(lowerText)) { console.log(`Ignoring transcription: "${transcribedText}" (Reason: Empty or ignored phrase)`); updateStatus("Ignored empty/noise input.", 'info'); } else { addConversationEntry(cleanedText, 'user'); updateStatus("Transcription complete.", 'success'); await getLlmResponse(cleanedText); } } catch (err) { displayGlobalError("Transcription/Processing failed", err); addConversationEntry(`[Error processing audio: ${err.message || err}]`, 'error'); hideCancelButton(); } finally { if (transcriptionSession) { console.log("Destroying transcription session (in finally)..."); transcriptionSession.destroy(); } isProcessing = false; console.log("ProcessAudio finished, checking if restart needed."); checkAndRestartListening(); } }
+
+         // --- Audio Recording and Silence Detection ---
+        function getAudioLevel(dataArray) { return 20 * Math.log10(Math.sqrt([...dataArray].reduce((sum, val) => sum + val * val, 0) / dataArray.length) || 1e-10); }
+        function checkForSilence() { /* (No changes) */ if (!analyserNode || !audioDataArray || !isRecording) return; analyserNode.getFloatTimeDomainData(audioDataArray); const level = getAudioLevel(audioDataArray); if (allowTtsInterrupt && isSpeaking && level > TTS_INTERRUPT_THRESHOLD) { console.log(`INTERRUPT DETECTED: Noise level ${level.toFixed(2)} dB > ${TTS_INTERRUPT_THRESHOLD} dB while speaking.`); if (synth) { console.log("INTERRUPT: Calling synth.cancel()."); synth.cancel(); } else { console.log("INTERRUPT: Synth not available to cancel."); } console.log(`INTERRUPT: Clearing TTS queue (was ${ttsQueue.length} items).`); ttsQueue = []; console.log("INTERRUPT: Setting isSpeaking = false."); isSpeaking = false; console.log("INTERRUPT: Calling checkAndRestartListening()."); checkAndRestartListening(); hideCancelButton(); } if (level < SILENCE_THRESHOLD) { if (silenceStart === null) { silenceStart = Date.now(); } else if (Date.now() - silenceStart >= SILENCE_DURATION_MS) { if (isRecording) { console.log(`Silence detected for ${SILENCE_DURATION_MS}ms.`); stopListeningAndProcess(); } silenceStart = null; } } else { silenceStart = null; } }
+        function stopListeningAndProcess() { /* (No changes) */ if (!isRecording) return; const recordingEndTime = Date.now(); const duration = recordingStartTime ? recordingEndTime - recordingStartTime : 0; console.log(`Recording stopped. Duration: ${duration}ms`); lastRecordingDuration = duration; if (checkInterval) { clearInterval(checkInterval); checkInterval = null; } if (mediaRecorder && mediaRecorder.state === 'recording') { mediaRecorder.stop(); } isRecording = false; }
+        function checkAndRestartListening() { /* (No changes) */ console.log(`Check restart: isProcessing=${isProcessing}, isSpeaking=${isSpeaking}, ttsQueue=${ttsQueue.length}, isManuallyStopped=${isManuallyStopped}`); if (!isProcessing && !isManuallyStopped) { if (!isSpeaking && ttsQueue.length === 0) { hideCancelButton(); } startListening(); } else { console.log("Not restarting listening (processing, speaking, queued, or manually stopped)."); if (!isProcessing && !isSpeaking && ttsQueue.length === 0) { hideCancelButton(); } } }
+        async function startListening() { /* (No changes) */ if (isRecording || isProcessing) { console.log(`Skipping startListening: isRecording=${isRecording}, isProcessing=${isProcessing}`); return; } isManuallyStopped = false; try { if (typeof LanguageModel === 'undefined') throw new Error("Prompt API not available."); const availability = await LanguageModel.availability({ expectedInputs: [{ type: 'audio' }] }); if (availability === 'unavailable') throw new Error("Prompt API cannot process audio."); if (availability === 'downloadable' || availability === 'downloading') { updateStatus("Model download needed...", 'info'); } if (!mediaStream) { updateStatus("Requesting microphone...", 'info'); mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true }); console.log("Mic access granted."); } if (!audioContext || audioContext.state === 'closed') { audioContext = new (window.AudioContext || window.webkitAudioContext)(); const source = audioContext.createMediaStreamSource(mediaStream); analyserNode = audioContext.createAnalyser(); analyserNode.fftSize = 2048; audioDataArray = new Float32Array(analyserNode.fftSize); source.connect(analyserNode); console.log("AudioContext setup."); } audioChunks = []; mediaRecorder = new MediaRecorder(mediaStream); mediaRecorder.ondataavailable = (event) => { if (event.data.size > 0) audioChunks.push(event.data); };
+            // MODIFIED: Removed updateStatus call from onstop duration check
+            mediaRecorder.onstop = () => {
+                console.log("MediaRecorder stopped (onstop event).");
+                if (audioChunks.length === 0) {
+                    console.log("onstop: No audio chunks found. Restarting listening.");
+                    if (!isProcessing) checkAndRestartListening(); return;
+                }
+                if (lastRecordingDuration < MIN_AUDIO_DURATION_MS) {
+                    console.log(`onstop: Discarding short audio (${lastRecordingDuration}ms).`);
+                    // REMOVED: updateStatus call for "too short" message
+                    audioChunks = [];
+                    if (!isProcessing) checkAndRestartListening(); return;
+                }
+                // Process if duration is sufficient
+                if (!isProcessing) {
+                    const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+                    console.log(`onstop: Sufficient duration audio blob created: ${audioBlob.size} bytes`);
+                    processAudio(audioBlob);
+                } else {
+                    console.log("onstop: Already processing, not starting new process.");
+                }
+                audioChunks = [];
+            };
+            mediaRecorder.onerror = (event) => { displayGlobalError("MediaRecorder error", event.error); stopListening(); }; mediaRecorder.start(500); recordingStartTime = Date.now(); isRecording = true; silenceStart = null; updateStatus("Listening...", 'listening'); if (checkInterval) clearInterval(checkInterval); checkInterval = setInterval(checkForSilence, AUDIO_CHECK_INTERVAL_MS); console.log("Recording started."); } catch (err) { displayGlobalError("Failed to start listening", err); stopListening(); } }
+        function stopListening() { /* (No changes) */ console.log("Stopping listening completely."); if (currentLlmAbortController) { console.log("Aborting LLM stream via stopListening."); currentLlmAbortController.abort(); currentLlmAbortController = null; } if (synth && synth.speaking) { console.log("Stopping ongoing speech."); synth.cancel(); } isSpeaking = false; ttsQueue = []; hideCancelButton(); if (checkInterval) clearInterval(checkInterval); checkInterval = null; if (mediaRecorder && mediaRecorder.state !== 'inactive') { try { mediaRecorder.stop(); } catch (e) { console.warn("Error stopping recorder:", e); } } if (mediaStream) { mediaStream.getTracks().forEach(track => track.stop()); mediaStream = null; } if (audioContext && audioContext.state === 'running') { audioContext.close().catch(e => console.warn("Error closing AudioContext:", e)); audioContext = null; } if (llmResponseSession) { console.log("Destroying persistent LLM response session."); llmResponseSession.destroy(); llmResponseSession = null; } isRecording = false; isProcessing = false; analyserNode = null; audioDataArray = null; recordingStartTime = null; lastRecordingDuration = 0; updateStatus(isManuallyStopped ? "Stopped. Click to Listen" : "Stopped.", isManuallyStopped ? 'stopped' : 'info'); if (isManuallyStopped) { statusDiv.classList.add('clickable-status'); } }
+        function handleStatusClick() { /* (No changes) */ if (!isInitialized) { console.log("Manual start triggered."); isInitialized = true; isManuallyStopped = false; statusDiv.classList.remove('bg-blue-500', 'hover:bg-blue-600', 'cursor-pointer', 'clickable-status'); startListening(); } else { if (isRecording) { console.log("Status click: Stopping listening manually."); isManuallyStopped = true; stopListening(); } else { if (!isProcessing && !isSpeaking && ttsQueue.length === 0) { console.log("Status click: Starting listening manually."); isManuallyStopped = false; startListening(); } else { console.log("Status click: Cannot start, system busy or already stopped."); } } } }
+        function showCancelButton() { cancelButton.classList.remove('hidden'); }
+        function hideCancelButton() { cancelButton.classList.add('hidden'); }
+
+        // --- Initialization ---
+        window.addEventListener('load', () => {
+            // Initialize TTS
+            if ('speechSynthesis' in window) { synth = window.speechSynthesis; if (synth.onvoiceschanged !== undefined) { synth.onvoiceschanged = loadVoices; } loadVoices(); } else { console.warn("SpeechSynthesis not supported."); updateStatus("TTS not supported.", "info"); }
+            // Setup initial button state
+            statusText.textContent = 'Start Listening'; statusDiv.classList.add('bg-blue-500', 'hover:bg-blue-600', 'clickable-status'); statusDiv.addEventListener('click', handleStatusClick);
+            // Listener for interrupt toggle
+            interruptToggle.addEventListener('change', (event) => { allowTtsInterrupt = event.target.checked; console.log(`TTS interrupt on noise: ${allowTtsInterrupt}`); });
+            allowTtsInterrupt = interruptToggle.checked;
+             // Listener for cancel button
+             cancelButton.addEventListener('click', () => { console.log("Cancel button clicked."); if (currentLlmAbortController) { console.log("Aborting LLM stream via Cancel button."); currentLlmAbortController.abort(); currentLlmAbortController = null; } if (synth) synth.cancel(); ttsQueue = []; isSpeaking = false; isProcessing = false; hideCancelButton(); isManuallyStopped = true; updateStatus("Cancelled. Click to Listen", 'stopped'); /* Don't call checkAndRestartListening */ });
+            window.addEventListener('beforeunload', stopListening);
+        });
+
+    </script>
+</body>
+</html>
