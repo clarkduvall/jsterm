@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Website Prototyper</title>
+    <style>
+        /* Basic styling for layout - Using standard CSS */
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            background-color: #f3f4f6; /* Slightly off-white */
+            color: #1f2937; /* Dark gray text */
+        }
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        .pane {
+            flex: 1;
+            padding: 1rem;
+            overflow: auto;
+            height: 100%;
+            border-left: 1px solid #d1d5db;
+        }
+        .pane:first-child {
+            border-left: none;
+        }
+        #code-editor {
+            width: 100%;
+            height: calc(100% - 2.5rem); /* Adjusted for label */
+            font-family: monospace;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+            resize: none;
+            background-color: #ffffff;
+            color: #1f2937;
+            line-height: 1.4;
+        }
+        #preview-frame {
+            width: 100%;
+            height: calc(100% - 2.5rem); /* Adjusted for label */
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            background-color: #ffffff;
+        }
+        .header {
+            padding: 1rem;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+        }
+        .loading-overlay {
+            position: fixed; /* Full screen overlay for initial loading */
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6); /* Darker overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            flex-direction: column;
+            gap: 1rem;
+            transition: opacity 0.3s ease-out;
+            opacity: 1;
+        }
+         .loading-overlay.hidden {
+             opacity: 0;
+             pointer-events: none;
+         }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #ffffff;
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Custom scrollbar for webkit browsers */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #bdbdbd;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9e9e9e;
+        }
+
+        /* --- Button Styles (Standard CSS) --- */
+        button { /* Base style for all buttons */
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.1rem;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+            transition: background-image 0.2s ease-out, background-color 0.2s ease-out, box-shadow 0.2s ease-out, transform 0.1s ease-out;
+            background-color: #4f46e5;
+            background-image: linear-gradient(to bottom right, #6366f1, #4f46e5);
+        }
+        button:hover {
+            background-image: linear-gradient(to bottom right, #818cf8, #6366f1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.08);
+            transform: translateY(-1px);
+        }
+         button:active {
+            background-image: linear-gradient(to bottom right, #4f46e5, #4338ca);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            transform: translateY(0px);
+         }
+        button:disabled {
+            background-image: linear-gradient(to bottom right, #a5b4fc, #c7d2fe);
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: translateY(0px);
+            opacity: 0.7;
+        }
+        .header button span {
+            margin-left: 0.25rem;
+        }
+        /* Cancel button style (now separate) */
+        #cancel-generation-button {
+            background-image: none;
+            background-color: #ef4444; /* Red */
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+        }
+        #cancel-generation-button:hover {
+             background-image: none;
+             background-color: #dc2626; /* Darker Red */
+        }
+         #cancel-generation-button:active {
+             background-image: none;
+             background-color: #b91c1c; /* Even Darker Red */
+         }
+        /* --- End Button Styles --- */
+
+        /* --- Cancel Strip Styles --- */
+        #cancel-strip {
+            position: fixed;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 40; /* Below loading overlay but above content */
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            display: none; /* Hidden by default */
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        /* --- End Cancel Strip Styles --- */
+
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 0.6rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            min-width: 200px;
+            font-size: 0.9rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+            font-size: 0.9rem;
+        }
+        .message-box {
+            position: fixed;
+            top: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #ef4444;
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 60;
+            display: none;
+            font-size: 0.875rem;
+        }
+        .message-box.success {
+             background-color: #22c55e;
+        }
+         .message-box.info {
+             background-color: #3b82f6; /* Blue */
+         }
+    </style>
+</head>
+<body>
+
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <p style="color: white; font-weight: 500;">AI is thinking...</p>
+        </div>
+
+    <div id="message-box" class="message-box">Error message here</div>
+
+    <div id="cancel-strip">
+        <button id="cancel-generation-button">Cancel Generation</button>
+    </div>
+    <header class="header">
+        <input type="text" id="prompt-input" placeholder="Describe the website you want to build..." class="flex-grow">
+        <button id="generate-button">
+            ✨<span>Generate</span>
+        </button>
+        <button id="update-code-button">
+            👀<span>Update Preview</span>
+        </button>
+        <input type="text" id="modify-prompt-input" placeholder="Describe changes to the website..." class="flex-grow">
+         <button id="modify-button">
+            🪄<span>Modify with AI</span>
+        </button>
+        </header>
+
+    <main class="main-content">
+        <div class="pane">
+            <label for="code-editor">Code (HTML/CSS/JS)</label>
+            <textarea id="code-editor" spellcheck="false"></textarea>
+        </div>
+        <div class="pane">
+            <label for="preview-frame">Live Preview</label>
+            <iframe id="preview-frame" title="Website Preview" sandbox="allow-scripts allow-same-origin"></iframe>
+        </div>
+    </main>
+
+    <script>
+        // --- DOM Elements ---
+        const promptInput = document.getElementById('prompt-input');
+        const modifyPromptInput = document.getElementById('modify-prompt-input');
+        const generateButton = document.getElementById('generate-button');
+        const modifyButton = document.getElementById('modify-button');
+        const updateCodeButton = document.getElementById('update-code-button');
+        const codeEditor = document.getElementById('code-editor');
+        const previewFrame = document.getElementById('preview-frame');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const messageBox = document.getElementById('message-box');
+        const cancelStrip = document.getElementById('cancel-strip');
+        const cancelGenerationButton = document.getElementById('cancel-generation-button');
+
+
+        // --- State ---
+        let languageModelSession = null;
+        let isModelApiAvailable = false;
+        let previewUpdateTimer = null;
+        const PREVIEW_UPDATE_INTERVAL = 1000;
+        const SESSION_CREATION_TIMEOUT = 15000;
+        let currentAbortController = null;
+
+
+        // --- System Prompt ---
+        const SYSTEM_PROMPT = `You are an expert web developer specializing in rapid prototyping.
+Generate a complete, single-file HTML document based on the user's request.
+The HTML file MUST be self-contained. DO NOT use <link> tags to link external resources like stylesheets.
+CSS rules should be placed within <style> tags in the <head>. DO NOT use inline 'style' attributes unless absolutely necessary.
+JavaScript logic can be defined using inline event handler attributes (like 'onclick', 'onload', etc.) OR using <script> tags.
+If using <script> tags, the JavaScript code MUST be placed directly inside the tag. DO NOT use the 'src' attribute on <script> tags. Place <script> tags preferably just before the closing </body> tag.
+For placeholder images, use URLs from placehold.co like this: 'https://placehold.co/600x400/eee/aaa?text=Placeholder'. Adjust size, colors (hex), and text as needed.
+The output should be ONLY the HTML code, starting with <!DOCTYPE html> and ending with </html>.
+Do not include any explanations, markdown formatting, or text outside the HTML code itself.
+Make the website visually appealing and functional.`;
+
+
+        // --- Utility Functions ---
+
+        function showLoading(text = "AI is thinking...") {
+            console.log(`Showing loading overlay: ${text}`);
+            loadingOverlay.querySelector('p').textContent = text;
+            loadingOverlay.classList.remove('hidden');
+            disableButtons();
+        }
+
+        function hideLoading() {
+            if (!loadingOverlay.classList.contains('hidden')) {
+                 console.log("Hiding loading overlay.");
+                 loadingOverlay.classList.add('hidden');
+            }
+        }
+
+        function showCancelStrip() {
+             console.log("Showing cancel strip.");
+             cancelStrip.style.display = 'inline-flex';
+             disableButtons(); // Keep main buttons disabled
+        }
+
+        function hideCancelStrip() {
+             console.log("Hiding cancel strip.");
+             cancelStrip.style.display = 'none';
+        }
+
+
+        function disableButtons() {
+            console.log("Disabling buttons.");
+            generateButton.disabled = true;
+            modifyButton.disabled = true;
+            updateCodeButton.disabled = true;
+        }
+
+        /**
+         * Enables buttons based on API availability and session state.
+         * Removed the overlay check.
+         */
+        function enableButtons() {
+            // Always attempt to set button states based on model/session status
+            console.log(`Enabling buttons check. API available: ${isModelApiAvailable}, Session exists: ${!!languageModelSession}`);
+            generateButton.disabled = !isModelApiAvailable;
+            modifyButton.disabled = !(isModelApiAvailable && languageModelSession);
+            updateCodeButton.disabled = false; // Always enabled
+            console.log(`Resulting states => Generate: ${!generateButton.disabled}, Modify: ${!modifyButton.disabled}, Update: ${!updateCodeButton.disabled}`);
+        }
+
+
+        function showMessage(message, type = 'error') {
+             console.log(`Showing message (Type: ${type}): ${message}`);
+            messageBox.textContent = message;
+            messageBox.className = 'message-box';
+             if (type === 'success') {
+                 messageBox.classList.add('success');
+             } else if (type === 'info') {
+                 messageBox.classList.add('info');
+             }
+            messageBox.style.display = 'block';
+            messageBox.style.zIndex = '60';
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 5000);
+        }
+
+        function updatePreview(htmlCode) {
+            const placeholder = '<p style="padding: 1rem; font-family: sans-serif; color: #6b7280;">Preview will appear here once valid code is generated or entered.</p>';
+            const errorPlaceholder = '<p style="padding: 1rem; font-family: sans-serif; color: #e11d48;">Error rendering preview.</p>';
+
+            if (typeof htmlCode !== 'string') {
+                 console.warn("updatePreview: Received non-string code. Clearing preview.");
+                 previewFrame.srcdoc = placeholder;
+                 return;
+            }
+            const trimmedCode = htmlCode.trim();
+             if (trimmedCode === '') {
+                 previewFrame.srcdoc = placeholder;
+                 return;
+             }
+            try {
+                previewFrame.srcdoc = htmlCode;
+            } catch (error) {
+                console.error("Error setting preview frame srcdoc:", error);
+                showMessage("Error updating preview frame.", 'error');
+                try { previewFrame.srcdoc = errorPlaceholder; }
+                catch (iframeError) { console.error("Error setting error placeholder in iframe:", iframeError); }
+            }
+        }
+
+
+        // --- Prompt API Interaction ---
+
+        async function checkModelAvailability() {
+             console.log("Checking Language Model availability...");
+            if (typeof LanguageModel === 'undefined') {
+                 console.error("LanguageModel API is not defined in this browser.");
+                 showMessage("Error: Prompt API is not available in this browser.", 'error');
+                 isModelApiAvailable = false;
+                 enableButtons();
+                 return;
+             }
+
+             try {
+                 // No loading indicator needed for this check
+                 const availability = await LanguageModel.availability();
+                 console.log("Model availability status:", availability);
+                 if (availability === 'unavailable') {
+                     console.warn("Model is unavailable according to availability check.");
+                     showMessage("Warning: On-device AI model may not be available or supported.", 'error');
+                     isModelApiAvailable = false;
+                 } else {
+                     isModelApiAvailable = true;
+                     console.log("Language Model API is available.");
+                     showMessage("AI Model API available.", 'success');
+                 }
+             } catch (error) {
+                 console.error("Error checking model availability:", error);
+                 showMessage(`Error checking AI status: ${error.message}`, 'error');
+                 isModelApiAvailable = false;
+             } finally {
+                 // No hideLoading here
+                 enableButtons(); // Update buttons based on check result
+             }
+        }
+
+
+        async function processPromptStream(promptPayload, isModification = false) {
+            console.log(`processPromptStream called. Is modification: ${isModification}`);
+
+             if (!isModelApiAvailable) { /* ... */ return; }
+             if (isModification && !languageModelSession) { /* ... */ return; }
+             if (typeof promptPayload !== 'string' || !promptPayload.trim()) { /* ... */ return; }
+
+            if (currentAbortController) { currentAbortController.abort(); currentAbortController = null; }
+            if (previewUpdateTimer) { clearTimeout(previewUpdateTimer); previewUpdateTimer = null; }
+
+            currentAbortController = new AbortController();
+            showLoading(isModification ? "Applying AI modifications..." : "Generating website code...");
+
+            let sessionToUse = languageModelSession;
+
+            // --- Session Handling for Generation ---
+            if (!isModification) {
+                const sessionToDestroy = languageModelSession;
+                languageModelSession = null;
+                // Don't enable buttons here, wait for finally block
+
+                if (sessionToDestroy) {
+                    console.log("Destroying previous session...");
+                    try { await sessionToDestroy.destroy(); console.log("Previous session destroyed successfully."); }
+                    catch (e) { console.error("Error destroying previous session:", e); showMessage("Warning: Could not cleanly destroy previous session.", 'error'); }
+                }
+
+                try {
+                    console.log("Creating new session for generation...");
+                    showLoading("Creating new AI session..."); // Update loading text
+
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error(`Session creation timed out after ${SESSION_CREATION_TIMEOUT}ms`)), SESSION_CREATION_TIMEOUT));
+                    console.log("Attempting LanguageModel.create...");
+                    sessionToUse = await Promise.race([ LanguageModel.create({ systemPrompt: SYSTEM_PROMPT }), timeoutPromise ]);
+                    console.log("LanguageModel.create call finished.");
+
+                    languageModelSession = sessionToUse;
+                    console.log("New session created successfully.");
+                    showLoading(isModification ? "Applying AI modifications..." : "Generating website code..."); // Update text back
+
+                } catch (error) {
+                    console.error("Caught error during session creation:", error);
+                    showMessage(`Error creating AI session: ${error.message}`, 'error');
+                    sessionToUse = null; languageModelSession = null;
+                    hideLoading(); enableButtons(); currentAbortController = null; return;
+                }
+            }
+            // --- End Session Handling ---
+
+
+             if (!sessionToUse) { /* ... error handling ... */
+                 console.error("No valid session available for processing.");
+                 showMessage("Error: AI session is not available.", 'error');
+                 hideLoading(); enableButtons(); currentAbortController = null; return;
+             }
+
+
+            // --- Streaming Logic ---
+            let accumulatedCode = '';
+            codeEditor.value = '';
+            updatePreview('');
+
+            let firstChunkProcessed = false;
+            let foundFirstTag = false;
+            let isInvalidStart = false;
+
+            try {
+                 const fullPrompt = promptPayload;
+                 console.log("Starting prompt stream...");
+                 const stream = await sessionToUse.promptStreaming(fullPrompt, { signal: currentAbortController.signal });
+
+                 for await (const chunk of stream) {
+                     let currentChunk = chunk;
+
+                     if (!firstChunkProcessed) {
+                         firstChunkProcessed = true;
+                         if (!loadingOverlay.classList.contains('hidden')) {
+                             console.log("First chunk received, hiding loading overlay, showing cancel strip.");
+                             hideLoading();
+                             showCancelStrip();
+                         }
+                     }
+
+                     if (!foundFirstTag) { /* ... skip-to-tag logic ... */
+                         const trimmedChunk = currentChunk.trimStart();
+                         if (trimmedChunk.length > 0) {
+                             if (trimmedChunk.startsWith('<')) {
+                                 foundFirstTag = true;
+                                 const tagIndex = currentChunk.indexOf('<');
+                                 currentChunk = currentChunk.slice(tagIndex);
+                                 console.log("First '<' found, starting to process stream content.");
+                             } else {
+                                 console.error("AI response started with invalid text:", trimmedChunk);
+                                 isInvalidStart = true;
+                                 showMessage("Error: AI response did not start with valid HTML ('<').", 'error');
+                                 break;
+                             }
+                         } else { currentChunk = ''; }
+                     }
+
+                     if (foundFirstTag && currentChunk.length > 0) { /* ... accumulate and throttle preview ... */
+                         accumulatedCode += currentChunk;
+                         codeEditor.value = accumulatedCode;
+                         if (!previewUpdateTimer) {
+                             previewUpdateTimer = setTimeout(() => {
+                                 console.log("Throttled preview update executing.");
+                                 updatePreview(codeEditor.value);
+                                 previewUpdateTimer = null;
+                             }, PREVIEW_UPDATE_INTERVAL);
+                         }
+                     }
+
+                 } // End stream loop
+                 console.log("Stream finished.");
+
+                 if (isInvalidStart) { throw new Error("Invalid HTML start detected from AI response."); }
+
+                 // --- Post-stream cleanup ---
+                 if (previewUpdateTimer) { clearTimeout(previewUpdateTimer); previewUpdateTimer = null; }
+                 let finalCode = codeEditor.value;
+                 const lastTagIndex = finalCode.lastIndexOf('>');
+                 if (lastTagIndex !== -1) { /* ... remove trailing text ... */
+                     if (lastTagIndex < finalCode.length - 1) {
+                         console.log("Removing trailing text after last '>'.");
+                         finalCode = finalCode.slice(0, lastTagIndex + 1);
+                     }
+                 } else if (foundFirstTag && finalCode.length > 0) { console.warn("Final code contains no '>', potential invalid output left as is."); }
+                 if (finalCode !== codeEditor.value) { console.log("Updating editor with cleaned code post-stream."); codeEditor.value = finalCode; }
+                 console.log("Performing final preview update.");
+                 updatePreview(finalCode);
+                 // --- End post-stream cleanup ---
+
+                showMessage(isModification ? "Website updated!" : "Website generated!", 'success');
+
+            } catch (error) {
+                console.error("Error during prompt processing:", error);
+                 if (error.name === 'AbortError') {
+                     console.log("Stream generation cancelled by user.");
+                     showMessage("Generation cancelled.", 'info');
+                     codeEditor.value = ''; updatePreview('');
+                 } else if (!isInvalidStart) { /* ... other error handling ... */
+                     if (error.message.includes('session destroyed')) {
+                          console.warn("Stream aborted, likely due to session issue.");
+                          if (isModification && sessionToUse === languageModelSession) { languageModelSession = null; }
+                          showMessage("Generation cancelled or session closed.", 'error');
+                     } else { showMessage(`Error generating code: ${error.message}`, 'error'); }
+                 }
+                 if (previewUpdateTimer) { clearTimeout(previewUpdateTimer); previewUpdateTimer = null; }
+                 if(isInvalidStart) { codeEditor.value = ''; updatePreview(''); }
+                 // Loading hidden in finally
+            } finally {
+                 hideLoading();
+                 hideCancelStrip();
+                 enableButtons(); // Enable buttons AFTER overlays are hidden
+                 currentAbortController = null;
+            }
+        }
+
+
+        // --- Event Listeners ---
+         generateButton.addEventListener('click', () => {
+            processPromptStream(promptInput.value, false);
+        });
+
+        modifyButton.addEventListener('click', () => {
+            processPromptStream(modifyPromptInput.value, true);
+        });
+
+        cancelGenerationButton.addEventListener('click', () => {
+             if (currentAbortController) {
+                 console.log("Cancel button clicked. Aborting current request...");
+                 currentAbortController.abort();
+             } else {
+                 console.log("Cancel button clicked, but no active request found.");
+             }
+        });
+
+
+        updateCodeButton.addEventListener('click', () => {
+             console.log("Manual preview update triggered.");
+             if (previewUpdateTimer) { clearTimeout(previewUpdateTimer); previewUpdateTimer = null; }
+            const currentCode = codeEditor.value;
+             const lastTagIndex = currentCode.lastIndexOf('>');
+             let codeToPreview = currentCode;
+             if (lastTagIndex !== -1 && lastTagIndex < currentCode.length - 1) {
+                 console.log("Removing trailing text on manual update.");
+                 codeToPreview = currentCode.slice(0, lastTagIndex + 1);
+                 if(codeEditor.value !== codeToPreview) { codeEditor.value = codeToPreview; }
+             }
+            updatePreview(codeToPreview);
+            showMessage("Preview updated from editor code.", 'success');
+        });
+
+        promptInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); generateButton.click(); }
+        });
+
+        modifyPromptInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); modifyButton.click(); }
+        });
+
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("DOM Content Loaded. Initializing application.");
+            updatePreview('');
+            disableButtons(); // Start disabled
+            checkModelAvailability(); // Check API availability on load
+        });
+
+    </script>
+</body>
+</html>
