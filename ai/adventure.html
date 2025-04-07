@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Text Adventure (Streaming)</title>
+    <title>AI Text Adventure (Streaming, Creative v2)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -201,6 +201,7 @@
 
         // --- Prompt API Check ---
         async function checkAIAvailability() {
+            // Check if the LanguageModel API exists
             if (!window.LanguageModel) {
                  statusMessage.textContent = '❌ Error: The Prompt API is not available in this browser. Try Chrome with the experimental flag enabled.';
                  statusMessage.classList.add('error-box');
@@ -208,18 +209,21 @@
             }
 
             try {
+                // Check the availability status of the model
                 const availability = await LanguageModel.availability();
                 switch (availability) {
                     case 'available':
+                        // Model is ready
                         statusMessage.textContent = '✅ AI Ready!';
-                        loadingScreen.classList.add('hidden'); // Hide loading immediately
+                        loadingScreen.classList.add('hidden');
                         setupScreen.classList.remove('hidden');
                         return true;
                     case 'downloadable':
                     case 'downloading':
+                        // Model needs download or is downloading
                         statusMessage.textContent = `AI model needs ${availability === 'downloadable' ? 'downloading' : 'to finish downloading'}. Please wait... ⏳`;
                         downloadProgress.classList.remove('hidden');
-                        // We'll create a session to monitor download
+                        // Create a temporary session to monitor download progress
                         await LanguageModel.create({
                             monitor: (m) => {
                                 m.addEventListener("downloadprogress", (e) => {
@@ -229,33 +233,37 @@
                                 });
                             }
                         }).then(session => {
-                             session.destroy(); // Destroy immediately, only needed for monitoring
+                             // Destroy the temporary session once download info is obtained/done
+                             session.destroy();
                              statusMessage.textContent = '✅ AI Ready!';
                              loadingScreen.classList.add('hidden');
                              setupScreen.classList.remove('hidden');
-                        }).catch(handleError); // Handle download errors
+                        }).catch(handleError); // Handle errors during download monitoring
                         return true; // Assume it will become available
                     case 'unavailable':
                     default:
+                        // Model is not available
                         statusMessage.textContent = '❌ AI capabilities are unavailable on this device.';
                         statusMessage.classList.add('error-box');
                         return false;
                 }
             } catch (error) {
+                // Handle errors during the availability check
                 handleError("Error checking AI availability", error);
                 return false;
             }
         }
 
         // --- Suggestion Generation ---
-        // Uses prompt() as suggestions are short and streaming isn't necessary here
         async function generateSuggestions() {
+            // Avoid concurrent generation or generation without a session
             if (isGeneratingSuggestions || !suggestionSession) return;
             isGeneratingSuggestions = true;
             suggestionsLoading.classList.remove('hidden');
-            suggestionsList.innerHTML = ''; // Clear previous suggestions
+            suggestionsList.innerHTML = ''; // Clear previous
             suggestionsError.classList.add('hidden');
 
+            // Prompt for generating starting scenarios
             const suggestionPrompt = `
                 Generate 3 diverse and engaging starting prompts for a text adventure game.
                 Each prompt should be a short sentence or two, setting a scene and implying a choice or mystery.
@@ -268,22 +276,25 @@
             `;
 
             try {
-                // Using prompt() is fine for short, one-off generations like this.
+                // Use prompt() for short, non-streaming generation
                 const result = await suggestionSession.prompt(suggestionPrompt);
+                // Process the result into an array of prompts
                 const prompts = result.split('\n').map(p => p.trim()).filter(p => p.length > 0);
 
                 if (prompts.length === 0) throw new Error("AI returned no suggestions.");
 
+                // Create buttons for each suggestion
                 prompts.forEach(promptText => {
                     const button = document.createElement('button');
                     button.textContent = `✨ ${promptText}`;
                     button.className = 'suggestion-button w-full';
-                    button.onclick = () => startGame(promptText);
+                    button.onclick = () => startGame(promptText); // Start game with this prompt on click
                     suggestionsList.appendChild(button);
                 });
                 suggestionsLoading.classList.add('hidden');
 
             } catch (error) {
+                // Handle errors during suggestion generation
                 handleError("Error generating suggestions", error);
                 suggestionsLoading.classList.add('hidden');
                 suggestionsError.classList.remove('hidden');
@@ -294,161 +305,180 @@
 
         // --- Game Logic ---
         async function startGame(startPrompt) {
+            // Prevent starting if already running or prompt is empty
             if (isGameRunning || !startPrompt.trim()) return;
             isGameRunning = true;
+            // Switch UI from setup to game screen
             setupScreen.classList.add('hidden');
             gameScreen.classList.remove('hidden');
             gameConsole.innerHTML = ''; // Clear console
             addToConsole("Booting up adventure module...", "system");
-            setThinking(true);
+            setThinking(true); // Show thinking indicator
 
+            // Clean up suggestion session if it exists
             if (suggestionSession) {
                 suggestionSession.destroy();
                 suggestionSession = null;
             }
 
+            // --- REFINED System Prompt (v2) ---
             const systemPrompt = `
-                You are a Text Adventure Game Master.
-                Your role is to describe the game world, the results of the player's actions, and the current situation.
-                Be descriptive and engaging, like an old-school text adventure (Zork, Colossal Cave Adventure).
-                Keep your responses concise, focusing on the immediate environment and action outcomes.
-                Wait for the player's input (what they type) before proceeding.
-                Present challenges and choices.
-                Maintain consistency in the story and world.
-                Do not break character. Do not offer meta-commentary about being an AI.
-                Start by describing the scene based on the player's initial prompt. End your turn by asking "What do you do?".
+                You are a Creative Text Adventure Game Master.
+                Your goal is to weave an imaginative and engaging story based on the player's actions.
+                Describe the world vividly, using sensory details. Introduce unexpected twists, new characters, mysterious objects, or sudden events to push the story forward dynamically. Be creative!
+                After describing the scene and the results of the player's last action, you MUST end your response with one, and only one, simple question asking the player for their next action. Examples: "What do you do?", "What is your next action?".
+
+                If the player's input seems unrelated to the current game situation (e.g., talking about the real world), briefly acknowledge it (e.g., "Let's focus on the adventure.") and immediately re-prompt by asking for their next action in the game using one of the simple questions like "What do you do?". Do not get sidetracked.
+
+                Maintain consistency in the story and world. Do not break character or mention being an AI.
 
                 Example Interaction Flow:
-                AI: You are in a dimly lit library. Bookshelves line the walls, filled with ancient, dusty tomes. A large wooden desk sits in the center. A faint scratching sound comes from behind the desk. What do you do?
-                Player: look behind desk
-                AI: You cautiously peek behind the heavy oak desk. A small, furry creature with glowing eyes scurries away into a crack in the wall. On the floor where it was, you see a small, ornate silver key. What do you do?
-                Player: take key
-                AI: You pick up the silver key. It feels cool to the touch and has intricate carvings. What do you do?
+                AI: You stand before the ancient, vine-choked temple entrance. Strange glyphs pulse with a faint emerald light around the stone archway. The air hums with forgotten power. To your left, a narrow path disappears into the dense jungle. What do you do?
+                Player: check the glyphs
+                AI: As you touch a glowing glyph, it flares brightly, and you feel a tingling sensation run up your arm. Suddenly, the vines covering the entrance writhe and pull apart, revealing a dark opening. From within, you hear a low, resonant chanting. What do you do?
+                Player: tell me a joke
+                AI: Let's focus on the adventure. The chanting from the temple entrance seems to grow louder. What do you do?
+                Player: enter temple
+                AI: You step cautiously into the darkness. The air is cool and smells of dust and ozone. The chanting stops abruptly. Torches lining the corridor flicker to life, revealing intricate carvings of serpent-headed figures along the walls. At the end of the corridor, a shimmering portal swirls with purple energy. What is your next action?
             `;
 
+
             try {
+                // Create the main game session with the system prompt
                 gameSession = await LanguageModel.create({ systemPrompt });
                 addToConsole("System ready. Adventure awaits...", "system");
 
-                // --- Use promptStreaming for the first response ---
+                // Get the initial game state description using streaming
                 const stream = await gameSession.promptStreaming(startPrompt);
-                await streamToConsole(stream); // Process the stream
+                await streamToConsole(stream); // Process and display the streamed response
 
             } catch (error) {
+                // Handle errors during game session creation or initial prompt
                 handleError("Failed to start game session", error);
                 addToConsole("Critical error: Could not initialize game master AI. Please restart.", "error");
-                setThinking(false);
-                gameInput.disabled = true;
-                isGameRunning = false;
+                setThinking(false); // Stop thinking indicator
+                gameInput.disabled = true; // Disable input on critical failure
+                isGameRunning = false; // Allow restart
             } finally {
-                 // streamToConsole will call setThinking(false) on completion/error
-                 // No need to call it here unless stream creation itself failed immediately
-                 if (!isWaitingForAI) { // Only call if streamToConsole didn't run or errored instantly
+                 // Ensure thinking indicator is off if stream processing didn't complete/run
+                 if (!isWaitingForAI) {
                     setThinking(false);
                  }
             }
         }
 
+        // Handle user input during the game
         async function handleUserInput() {
             const input = gameInput.value.trim();
+            // Ignore empty input or input while AI is processing
             if (!input || !isGameRunning || !gameSession || isWaitingForAI) {
                 return;
             }
 
-            gameInput.value = '';
-            addToConsole(`> ${input}`, "player");
-            setThinking(true);
+            gameInput.value = ''; // Clear input field
+            addToConsole(`> ${input}`, "player"); // Display player command
+            setThinking(true); // Show thinking indicator
 
             try {
-                // --- Use promptStreaming for subsequent responses ---
+                // Get the AI's response using streaming
                 const stream = await gameSession.promptStreaming(input);
-                await streamToConsole(stream); // Process the stream
+                await streamToConsole(stream); // Process and display the streamed response
 
             } catch (error) {
+                // Handle errors during AI response generation
                 handleError("Error getting AI response stream", error);
                 addToConsole("The connection flickers... Try your command again.", "error");
-                 setThinking(false); // Ensure thinking is set to false on stream creation error
+                 setThinking(false); // Ensure thinking indicator is off on error
             } finally {
-                 // streamToConsole will call setThinking(false) on completion/error
-                 // No need to call it here unless stream creation itself failed immediately
-                 if (!isWaitingForAI) { // Only call if streamToConsole didn't run or errored instantly
+                 // Ensure thinking indicator is off if stream processing didn't complete/run
+                 if (!isWaitingForAI) {
                      setThinking(false);
                  }
             }
         }
 
-        // --- New function to handle streaming output ---
+        // Process and display streamed AI responses
         async function streamToConsole(stream) {
             let currentParagraph = null;
             try {
-                // Create a new paragraph element for this AI response
+                // Create a new paragraph for the incoming AI response
                 currentParagraph = document.createElement('p');
                 currentParagraph.className = 'text-green-400'; // AI response color
                 gameConsole.appendChild(currentParagraph);
                 scrollToBottom(); // Scroll down initially
 
+                // Iterate through chunks in the stream
                 for await (const chunk of stream) {
-                    currentParagraph.textContent += chunk;
+                    currentParagraph.textContent += chunk; // Append chunk to paragraph
                     scrollToBottom(); // Scroll down as text is added
                 }
             } catch (error) {
+                 // Handle errors during stream processing
                  handleError("Error processing AI response stream", error);
                  if (currentParagraph) {
-                    // Add error indicator to the partially streamed response if possible
+                     // Indicate error on the partially displayed response
                      currentParagraph.textContent += ' [Error receiving full response]';
-                     currentParagraph.classList.add('text-red-500'); // Make it red
+                     currentParagraph.classList.add('text-red-500');
                  } else {
-                     // If we didn't even get to create the paragraph
                      addToConsole("Error receiving AI response.", "error");
                  }
             } finally {
-                // Crucially, set thinking to false *after* the stream is done or errored
+                // Stop the thinking indicator AFTER stream is done or errored
                 setThinking(false);
             }
         }
 
-
+        // Toggle thinking indicator and input field state
         function setThinking(isThinking) {
              isWaitingForAI = isThinking;
              thinkingMessage.classList.toggle('hidden', !isThinking);
              gameInput.disabled = isThinking;
-             if (!isThinking && isGameRunning) { // Only focus if game is actually running
+             // Return focus to input when AI is done and game is running
+             if (!isThinking && isGameRunning) {
                  gameInput.focus();
              }
         }
 
+        // Add a formatted message to the game console
         function addToConsole(text, sender = "system") {
             const p = document.createElement('p');
             let prefix = '';
             let textColor = 'text-gray-400'; // Default for system
 
-            if (sender === 'ai') { // Should generally not be used directly anymore, use streamToConsole
-                textColor = 'text-green-400';
-            } else if (sender === 'player') {
-                textColor = 'text-blue-400';
-                // Prefix '>' is now added directly for player input display
-            } else if (sender === 'error') {
-                 textColor = 'text-red-500';
-                 prefix = '⚠️ ';
-            } else { // system messages
-                 prefix = 'SYSTEM: ';
-                 textColor = 'text-yellow-500'; // Make system messages yellow
+            switch(sender) {
+                case 'player':
+                    textColor = 'text-blue-400'; // Player input color
+                    // Prefix '>' added before calling this function for player
+                    break;
+                case 'error':
+                     textColor = 'text-red-500'; // Error message color
+                     prefix = '⚠️ ';
+                     break;
+                case 'system':
+                     prefix = 'SYSTEM: ';
+                     textColor = 'text-yellow-500'; // System message color
+                     break;
+                 case 'ai': // Fallback if streamToConsole isn't used (shouldn't happen often)
+                     textColor = 'text-green-400';
+                     break;
             }
 
             p.className = `${textColor}`;
             p.textContent = `${prefix}${text}`;
             gameConsole.appendChild(p);
-            scrollToBottom();
+            scrollToBottom(); // Ensure console scrolls down
         }
 
+        // Scroll the game console to the bottom
         function scrollToBottom() {
              gameConsole.scrollTop = gameConsole.scrollHeight;
         }
 
-
+        // Reset the game state and UI to the setup screen
         function restartGame() {
             isGameRunning = false;
             isWaitingForAI = false;
+            // Clean up sessions
             if (gameSession) {
                 gameSession.destroy();
                 gameSession = null;
@@ -457,6 +487,7 @@
                 suggestionSession.destroy();
                 suggestionSession = null;
             }
+            // Reset UI elements
             gameScreen.classList.add('hidden');
             setupScreen.classList.remove('hidden');
             gameConsole.innerHTML = '';
@@ -466,31 +497,38 @@
             suggestionsList.innerHTML = '';
             suggestionsError.classList.add('hidden');
             thinkingMessage.classList.add('hidden');
+            // Re-initialize the suggestion session for the setup screen
             initializeSuggestionSession();
         }
 
+        // Generic error handler
         function handleError(message, error) {
-            console.error(message, error);
+            console.error(message, error); // Log detailed error to console
+            // Display user-friendly error message
             if (!isGameRunning) {
+                // Show error in the setup screen status message
                 statusMessage.textContent = `❌ Error: ${message}. Check console for details.`;
                 statusMessage.classList.add('error-box');
             } else {
-                // Avoid adding error to console if it happened during streaming,
-                // as streamToConsole handles its own error display.
-                // Add only if the error is outside the streaming loop itself.
+                // Show error in the game console, unless it's a stream processing error
+                // (streamToConsole handles its own error display within the paragraph)
                 if (!message.toLowerCase().includes("stream")) {
                    addToConsole(`Error: ${message}. ${error?.message || ''}`, "error");
                 }
             }
         }
 
+        // Initialize the session for generating suggestions
          async function initializeSuggestionSession() {
-            if (!window.LanguageModel) return;
+            if (!window.LanguageModel) return; // Exit if API not available
 
             try {
+                // Create the session
                 suggestionSession = await LanguageModel.create();
+                // Generate suggestions once session is ready
                 generateSuggestions();
             } catch (error) {
+                 // Handle errors during session creation
                  handleError("Failed to create suggestion session", error);
                  suggestionsLoading.classList.add('hidden');
                  suggestionsError.textContent = 'Could not initialize AI for suggestions. Please enter your own prompt.';
@@ -500,34 +538,41 @@
 
 
         // --- Event Listeners ---
+        // Start game with custom prompt
         startCustomButton.addEventListener('click', () => {
             const promptText = customPromptInput.value.trim();
             if (promptText) {
                 startGame(promptText);
             } else {
+                // Indicate that input is needed
                 customPromptInput.focus();
                 customPromptInput.classList.add('border-red-500');
                 setTimeout(() => customPromptInput.classList.remove('border-red-500'), 1500);
             }
         });
 
+        // Handle Enter key press in game input
         gameInput.addEventListener('keydown', (event) => {
             if (event.key === 'Enter') {
                 handleUserInput();
             }
         });
 
+        // Handle restart button click
         restartButton.addEventListener('click', restartGame);
 
         // --- Initialization ---
+        // Main initialization function called on page load
         async function initialize() {
-             gameInput.disabled = true;
+             gameInput.disabled = true; // Disable game input initially
+             // Check AI availability and proceed if available
              const available = await checkAIAvailability();
              if (available) {
-                 initializeSuggestionSession();
+                 initializeSuggestionSession(); // Setup suggestion generator
              }
          }
 
+        // Run initialization when the window loads
         window.addEventListener('load', initialize);
 
     </script>
