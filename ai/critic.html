@@ -76,7 +76,6 @@
                             <option value="flower">Pink Flower</option>
                             <option value="boat">Sailboat</option>
                             <option value="star">Gold Star</option>
-                            {/* --- New Starter Options --- */}
                             <option value="robot">Robot Friend</option>
                             <option value="butterfly">Colorful Butterfly</option>
                             <option value="landscape">Simple Landscape</option>
@@ -236,13 +235,11 @@
 
         clearCanvasBtn.addEventListener('click', () => {
              clearCanvasContent();
-             // Also reset slider value visual when clearing manually
              lineWidthSlider.value = 3;
              lineWidthValue.textContent = 3;
         });
 
-        // --- Starter Drawing Functions ---
-        // (Previous functions: drawCat, drawHouse, drawStickFigure, drawSmiley, drawTree, drawCar, drawFlower, drawBoat, drawStar - definitions unchanged, but ensure they call clearCanvasContent())
+        // --- Starter Drawing Functions (definitions unchanged) ---
         function drawCat() {
             clearCanvasContent();
             ctx.strokeStyle = 'black'; ctx.lineWidth = 3; ctx.fillStyle = 'black';
@@ -357,135 +354,54 @@
             ctx.closePath(); ctx.fill(); ctx.stroke();
         }
 
-        // --- NEW Detailed Starter Functions ---
         function drawRobot() {
             clearCanvasContent();
             ctx.strokeStyle = 'grey'; ctx.lineWidth = 3; ctx.fillStyle = '#E0E0E0'; // Light grey fill
-
-            // Head
             ctx.beginPath(); ctx.rect(170, 80, 60, 50); ctx.fill(); ctx.stroke(); // Head box
-            ctx.fillStyle = 'black';
-            ctx.beginPath(); ctx.arc(190, 100, 5, 0, Math.PI * 2); ctx.fill(); // Left eye
+            ctx.fillStyle = 'black'; ctx.beginPath(); ctx.arc(190, 100, 5, 0, Math.PI * 2); ctx.fill(); // Left eye
             ctx.beginPath(); ctx.arc(210, 100, 5, 0, Math.PI * 2); ctx.fill(); // Right eye
             ctx.beginPath(); ctx.rect(185, 115, 30, 5); ctx.fill(); // Mouth grill
-
-            // Antenna
-            ctx.strokeStyle = 'darkgrey'; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.moveTo(200, 80); ctx.lineTo(200, 60); ctx.stroke();
-            ctx.fillStyle = 'red'; ctx.beginPath(); ctx.arc(200, 55, 5, 0, Math.PI * 2); ctx.fill();
-
-            // Body
-            ctx.strokeStyle = 'grey'; ctx.lineWidth = 3; ctx.fillStyle = '#C0C0C0'; // Silver fill
-            ctx.beginPath(); ctx.rect(150, 140, 100, 120); ctx.fill(); ctx.stroke(); // Torso
-
-            // Arms
+            ctx.strokeStyle = 'darkgrey'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(200, 80); ctx.lineTo(200, 60); ctx.stroke(); // Antenna
+            ctx.fillStyle = 'red'; ctx.beginPath(); ctx.arc(200, 55, 5, 0, Math.PI * 2); ctx.fill(); // Antenna light
+            ctx.strokeStyle = 'grey'; ctx.lineWidth = 3; ctx.fillStyle = '#C0C0C0'; ctx.beginPath(); ctx.rect(150, 140, 100, 120); ctx.fill(); ctx.stroke(); // Torso
             ctx.beginPath(); ctx.rect(110, 150, 30, 80); ctx.fill(); ctx.stroke(); // Left arm
             ctx.beginPath(); ctx.rect(260, 150, 30, 80); ctx.fill(); ctx.stroke(); // Right arm
-            // Joints
-            ctx.fillStyle = 'grey';
-            ctx.beginPath(); ctx.arc(165, 150, 10, 0, Math.PI*2); ctx.fill(); // Left shoulder
+            ctx.fillStyle = 'grey'; ctx.beginPath(); ctx.arc(165, 150, 10, 0, Math.PI*2); ctx.fill(); // Left shoulder
             ctx.beginPath(); ctx.arc(235, 150, 10, 0, Math.PI*2); ctx.fill(); // Right shoulder
             ctx.beginPath(); ctx.arc(125, 230, 10, 0, Math.PI*2); ctx.fill(); // Left hand
             ctx.beginPath(); ctx.arc(275, 230, 10, 0, Math.PI*2); ctx.fill(); // Right hand
-
-            // Legs
             ctx.beginPath(); ctx.rect(160, 270, 30, 80); ctx.fill(); ctx.stroke(); // Left leg
             ctx.beginPath(); ctx.rect(210, 270, 30, 80); ctx.fill(); ctx.stroke(); // Right leg
-            // Feet
-            ctx.fillStyle = 'darkgrey';
-            ctx.beginPath(); ctx.ellipse(175, 355, 25, 10, 0, 0, Math.PI * 2); ctx.fill(); // Left foot
+            ctx.fillStyle = 'darkgrey'; ctx.beginPath(); ctx.ellipse(175, 355, 25, 10, 0, 0, Math.PI * 2); ctx.fill(); // Left foot
             ctx.beginPath(); ctx.ellipse(225, 355, 25, 10, 0, 0, Math.PI * 2); ctx.fill(); // Right foot
         }
 
         function drawButterfly() {
             clearCanvasContent();
             ctx.lineWidth = 2;
-
-            // Body
-            ctx.fillStyle = '#6B4226'; // Brown
-            ctx.beginPath();
-            ctx.ellipse(200, 200, 10, 40, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Antennae
-            ctx.strokeStyle = 'black';
-            ctx.beginPath(); ctx.moveTo(200, 160); ctx.quadraticCurveTo(180, 140, 170, 120); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(200, 160); ctx.quadraticCurveTo(220, 140, 230, 120); ctx.stroke();
-            ctx.fillStyle = 'black';
-            ctx.beginPath(); ctx.arc(170, 120, 3, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(230, 120, 3, 0, Math.PI*2); ctx.fill();
-
-
-            // Wings - using Bezier curves for more shape
-            // Left Top Wing
-            ctx.fillStyle = 'orange'; ctx.strokeStyle = 'black';
-            ctx.beginPath();
-            ctx.moveTo(200, 180); // Connect to body
-            ctx.bezierCurveTo(100, 100, 80, 200, 200, 210); // Outer curve
-            ctx.closePath(); ctx.fill(); ctx.stroke();
-            // Left Bottom Wing
-            ctx.fillStyle = 'yellow';
-            ctx.beginPath();
-            ctx.moveTo(200, 210); // Connect to body
-            ctx.bezierCurveTo(100, 300, 120, 280, 200, 230); // Outer curve
-            ctx.closePath(); ctx.fill(); ctx.stroke();
-
-            // Right Top Wing
-            ctx.fillStyle = 'orange';
-            ctx.beginPath();
-            ctx.moveTo(200, 180); // Connect to body
-            ctx.bezierCurveTo(300, 100, 320, 200, 200, 210); // Outer curve
-            ctx.closePath(); ctx.fill(); ctx.stroke();
-            // Right Bottom Wing
-            ctx.fillStyle = 'yellow';
-            ctx.beginPath();
-            ctx.moveTo(200, 210); // Connect to body
-            ctx.bezierCurveTo(300, 300, 280, 280, 200, 230); // Outer curve
-            ctx.closePath(); ctx.fill(); ctx.stroke();
-
-            // Simple Wing Details (Spots)
-            ctx.fillStyle = 'red';
-            ctx.beginPath(); ctx.arc(140, 160, 8, 0, Math.PI*2); ctx.fill(); // Top left
-            ctx.beginPath(); ctx.arc(260, 160, 8, 0, Math.PI*2); ctx.fill(); // Top right
-            ctx.fillStyle = 'blue';
-            ctx.beginPath(); ctx.arc(160, 250, 6, 0, Math.PI*2); ctx.fill(); // Bottom left
-            ctx.beginPath(); ctx.arc(240, 250, 6, 0, Math.PI*2); ctx.fill(); // Bottom right
+            ctx.fillStyle = '#6B4226'; ctx.beginPath(); ctx.ellipse(200, 200, 10, 40, 0, 0, Math.PI * 2); ctx.fill(); // Body
+            ctx.strokeStyle = 'black'; ctx.beginPath(); ctx.moveTo(200, 160); ctx.quadraticCurveTo(180, 140, 170, 120); ctx.stroke(); // Left antenna
+            ctx.beginPath(); ctx.moveTo(200, 160); ctx.quadraticCurveTo(220, 140, 230, 120); ctx.stroke(); // Right antenna
+            ctx.fillStyle = 'black'; ctx.beginPath(); ctx.arc(170, 120, 3, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(230, 120, 3, 0, Math.PI*2); ctx.fill(); // Antenna tips
+            ctx.fillStyle = 'orange'; ctx.strokeStyle = 'black'; ctx.beginPath(); ctx.moveTo(200, 180); ctx.bezierCurveTo(100, 100, 80, 200, 200, 210); ctx.closePath(); ctx.fill(); ctx.stroke(); // Left Top Wing
+            ctx.fillStyle = 'yellow'; ctx.beginPath(); ctx.moveTo(200, 210); ctx.bezierCurveTo(100, 300, 120, 280, 200, 230); ctx.closePath(); ctx.fill(); ctx.stroke(); // Left Bottom Wing
+            ctx.fillStyle = 'orange'; ctx.beginPath(); ctx.moveTo(200, 180); ctx.bezierCurveTo(300, 100, 320, 200, 200, 210); ctx.closePath(); ctx.fill(); ctx.stroke(); // Right Top Wing
+            ctx.fillStyle = 'yellow'; ctx.beginPath(); ctx.moveTo(200, 210); ctx.bezierCurveTo(300, 300, 280, 280, 200, 230); ctx.closePath(); ctx.fill(); ctx.stroke(); // Right Bottom Wing
+            ctx.fillStyle = 'red'; ctx.beginPath(); ctx.arc(140, 160, 8, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(260, 160, 8, 0, Math.PI*2); ctx.fill(); // Top spots
+            ctx.fillStyle = 'blue'; ctx.beginPath(); ctx.arc(160, 250, 6, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(240, 250, 6, 0, Math.PI*2); ctx.fill(); // Bottom spots
         }
 
         function drawLandscape() {
             clearCanvasContent();
-
-            // Sky
-            ctx.fillStyle = '#87CEEB'; // SkyBlue
-            ctx.fillRect(0, 0, canvas.width, 250); // Upper part of canvas
-
-            // Sun
-            ctx.fillStyle = 'yellow';
-            ctx.beginPath(); ctx.arc(300, 80, 30, 0, Math.PI * 2); ctx.fill();
-
-            // Ground
-            ctx.fillStyle = '#90EE90'; // LightGreen
-            ctx.fillRect(0, 250, canvas.width, 150); // Lower part
-
-            // Mountains
-            ctx.fillStyle = 'grey'; ctx.strokeStyle = 'darkgrey'; ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(0, 250); // Start at horizon left
-            ctx.lineTo(80, 180); // Peak 1
-            ctx.lineTo(160, 250); // Valley 1
-            ctx.lineTo(220, 150); // Peak 2 (higher)
-            ctx.lineTo(300, 250); // Valley 2
-            ctx.lineTo(350, 200); // Peak 3
-            ctx.lineTo(400, 250); // Horizon right
-            ctx.closePath();
-            ctx.fill(); ctx.stroke();
-
-            // Simple Cloud
-            ctx.fillStyle = 'white'; ctx.lineWidth = 0; // No outline for cloud
-            ctx.beginPath(); ctx.arc(100, 100, 20, 0, Math.PI * 2); ctx.fill(); // Left part
-            ctx.beginPath(); ctx.arc(130, 95, 25, 0, Math.PI * 2); ctx.fill(); // Middle part
-            ctx.beginPath(); ctx.arc(160, 100, 20, 0, Math.PI * 2); ctx.fill(); // Right part
-            ctx.fillRect(100, 90, 60, 30); // Base rectangle to connect circles
+            ctx.fillStyle = '#87CEEB'; ctx.fillRect(0, 0, canvas.width, 250); // Sky
+            ctx.fillStyle = 'yellow'; ctx.beginPath(); ctx.arc(300, 80, 30, 0, Math.PI * 2); ctx.fill(); // Sun
+            ctx.fillStyle = '#90EE90'; ctx.fillRect(0, 250, canvas.width, 150); // Ground
+            ctx.fillStyle = 'grey'; ctx.strokeStyle = 'darkgrey'; ctx.lineWidth = 2; ctx.beginPath(); // Mountains
+            ctx.moveTo(0, 250); ctx.lineTo(80, 180); ctx.lineTo(160, 250); ctx.lineTo(220, 150); ctx.lineTo(300, 250); ctx.lineTo(350, 200); ctx.lineTo(400, 250);
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = 'white'; ctx.lineWidth = 0; // Cloud
+            ctx.beginPath(); ctx.arc(100, 100, 20, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.arc(130, 95, 25, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.arc(160, 100, 20, 0, Math.PI * 2); ctx.fill();
+            ctx.fillRect(100, 90, 60, 30);
         }
 
 
@@ -502,19 +418,18 @@
                 case 'flower': drawFlower(); break;
                 case 'boat': drawBoat(); break;
                 case 'star': drawStar(); break;
-                case 'robot': drawRobot(); break; // New case
-                case 'butterfly': drawButterfly(); break; // New case
-                case 'landscape': drawLandscape(); break; // New case
+                case 'robot': drawRobot(); break;
+                case 'butterfly': drawButterfly(); break;
+                case 'landscape': drawLandscape(); break;
                 case '':
                 default: clearCanvasContent(); break;
             }
-             // Reset line width slider visual for starters
-             lineWidthSlider.value = 3; // Assuming 3 is default for starters
+             lineWidthSlider.value = 3;
              lineWidthValue.textContent = 3;
         });
 
 
-        // --- Prompt API Logic (unchanged) ---
+        // --- Prompt API Logic ---
         const critiqueButton = document.getElementById('critiqueButton');
         const personalitySelect = document.getElementById('personality');
         const critiqueOutput = document.getElementById('critiqueOutput');
@@ -537,6 +452,7 @@
         }
 
         async function initializePromptAPI() {
+            // Check if LanguageModel API is available
             if (typeof LanguageModel === 'undefined') {
                 apiStatus.textContent = 'Prompt API not supported.';
                 critiqueButton.disabled = true;
@@ -544,6 +460,7 @@
                 return;
             }
 
+            // Check if a model supporting images is available or downloadable
             try {
                 apiStatus.textContent = 'Checking AI model availability...';
                 const availability = await LanguageModel.availability({
@@ -586,7 +503,7 @@
             }
 
             hideError();
-            const personality = personalitySelect.value;
+            const personalityValue = personalitySelect.value; // Get the value (e.g., 'a confused alien')
             critiqueOutput.textContent = '';
             loadingIndicator.classList.remove('hidden');
             critiqueButton.disabled = true;
@@ -595,6 +512,7 @@
             let session = null;
 
             try {
+                // Create a new session for this critique
                 session = await LanguageModel.create({
                     expectedInputs: [{ type: "image" }],
                     monitor(m) {
@@ -615,28 +533,40 @@
                 apiStatus.textContent = 'Generating critique...';
                 const imageContent = canvas;
 
+                // --- Define the base instruction ---
+                let instruction = `You are ${personalityValue} art critic. First, state what you think the following drawing depicts (e.g., "This looks like a [subject]."). Then, provide a critique of the drawing based on your interpretation and personality. Keep the total response concise (around 3-5 sentences).`;
+
+                // --- Override instruction for the Confused Alien ---
+                if (personalityValue === 'a confused alien') {
+                    instruction = `Directive: Analyze visual input from Earth-unit. Identify subject matter based on limited Terran database. Provide analysis from the perspective of a confused alien observer, noting strange shapes or concepts. Query: What *is* this depiction? Critique its structure and form according to off-world logic. Response must be concise (3-5 Earth sentences).`;
+                }
+
+                // --- Construct the final prompt ---
                 const prompt = [
-                    `You are ${personality} art critic. First, state what you think the following drawing depicts (e.g., "This looks like a [subject]."). Then, provide a critique of the drawing based on your interpretation and personality. Keep the total response concise (around 3-5 sentences).`,
+                    instruction, // Use the potentially modified instruction
                     { type: "image", content: imageContent }
                  ];
 
+                // Get critique using the new session
                 const stream = await session.promptStreaming(prompt);
-                critiqueOutput.textContent = '';
+                critiqueOutput.textContent = ''; // Clear before streaming
 
                 const reader = stream.getReader();
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
-                    critiqueOutput.textContent += value;
+                    critiqueOutput.textContent += value; // Append streamed chunks
                 }
 
                 apiStatus.textContent = 'Critique received.';
 
             } catch (error) {
+                // Handle errors during session creation or prompting
                 showError(`Critique generation failed: ${error.message} (Name: ${error.name})`);
                 apiStatus.textContent = 'Critique Failed.';
 
             } finally {
+                 // IMPORTANT: Destroy the session after use (or on error)
                  if (session) {
                     try {
                         session.destroy();
@@ -645,12 +575,14 @@
                         console.error("Error destroying session:", destroyError);
                     }
                  }
+                // Re-enable button and hide loading
                 loadingIndicator.classList.add('hidden');
-                critiqueButton.disabled = !modelAvailable;
+                critiqueButton.disabled = !modelAvailable; // Only enable if model was ever available
+                 // Reset status message
                  if (modelAvailable && !errorMessage.classList.contains('hidden')) {
                      apiStatus.textContent = 'Critique Failed. Ready for next attempt.';
                  } else if (modelAvailable) {
-                    apiStatus.textContent = 'AI Model Ready.';
+                    apiStatus.textContent = 'AI Model Ready.'; // Reset status if successful
                  }
             }
         });
