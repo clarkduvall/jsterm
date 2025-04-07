@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Art Critic</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Basic canvas styling */
+        canvas {
+            cursor: crosshair;
+            touch-action: none; /* Prevent scrolling on touch devices while drawing */
+        }
+        /* Style for the active tool */
+        .active-tool {
+            background-color: #dbeafe; /* light blue */
+            border-color: #3b82f6; /* blue */
+        }
+        /* Custom scrollbar for critique box */
+       .critique-box::-webkit-scrollbar {
+            width: 8px;
+        }
+        .critique-box::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .critique-box::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        .critique-box::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* Ensure emojis in buttons are centered and sized appropriately */
+        .emoji-button {
+            font-size: 1.25rem; /* Adjust emoji size */
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-4xl">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">AI Art Critic 🎨</h1>
+
+        <div class="flex flex-col md:flex-row gap-6">
+
+            <div class="flex-1 flex flex-col items-center">
+                 <h2 class="text-xl font-semibold text-gray-700 mb-2">Draw Something or Select a Starter!</h2>
+                <div class="flex flex-wrap items-center justify-center gap-2 mb-4 p-2 bg-gray-200 rounded-md shadow-sm">
+                    <div class="flex items-center gap-2">
+                        <label for="colorPicker" class="cursor-pointer p-2 rounded border border-gray-300 hover:bg-gray-300" title="Color">
+                            <input type="color" id="colorPicker" value="#000000" class="w-6 h-6 border-none p-0 bg-transparent">
+                        </label>
+                        <button id="penTool" class="emoji-button p-2 rounded border border-gray-300 hover:bg-gray-300 active-tool" title="Pen">✏️</button>
+                        <button id="eraserTool" class="emoji-button p-2 rounded border border-gray-300 hover:bg-gray-300" title="Eraser">🧼</button>
+                        <label for="lineWidth" class="flex items-center gap-1 ml-2 text-sm" title="Line Width">
+                            <input type="range" id="lineWidth" min="1" max="20" value="3" class="w-20 cursor-pointer">
+                            <span id="lineWidthValue" class="text-xs w-4 text-right">3</span>
+                        </label>
+                        <button id="clearCanvasBtn" class="emoji-button p-2 rounded border border-gray-300 hover:bg-red-200 text-red-600 ml-4" title="Clear Canvas">🗑️</button>
+                    </div>
+                     <div class="flex items-center gap-2 ml-4">
+                         <label for="presetSelector" class="text-sm font-medium text-gray-600">Starters:</label>
+                         <select id="presetSelector" class="p-2 border border-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Select Starter...</option>
+                            <option value="cat">Cat Face</option>
+                            <option value="house">Cozy House</option>
+                            <option value="stickman">Stick Person</option>
+                            <option value="smiley">Happy Face</option>
+                            <option value="tree">Leafy Tree</option>
+                            <option value="car">Red Car</option>
+                            <option value="flower">Pink Flower</option>
+                            <option value="boat">Sailboat</option>
+                            <option value="star">Gold Star</option>
+                            {/* --- New Starter Options --- */}
+                            <option value="robot">Robot Friend</option>
+                            <option value="butterfly">Colorful Butterfly</option>
+                            <option value="landscape">Simple Landscape</option>
+                         </select>
+                    </div>
+                </div>
+                <canvas id="drawingCanvas" class="border border-gray-400 rounded-md bg-white shadow-inner" width="400" height="400"></canvas>
+                 <p class="text-xs text-gray-500 mt-1">Canvas: 400x400 pixels</p>
+            </div>
+
+            <div class="flex-1 flex flex-col">
+                <h2 class="text-xl font-semibold text-gray-700 mb-2 text-center md:text-left">Critique Options</h2>
+                <div class="mb-4">
+                    <label for="personality" class="block text-sm font-medium text-gray-600 mb-1">Select Critic Personality:</label>
+                    <select id="personality" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <option value="a snobby" selected>Art Connoisseur 🧐</option>
+                        <option value="a nice">Encouraging Friend 😊</option>
+                        <option value="an angry">Harsh Critic 😠</option>
+                        <option value="a scared">Timid Observer 😨</option>
+                        <option value="a helpful art teacher">Helpful Art Teacher 🧑‍🏫</option>
+                        <option value="a confused alien">Confused Alien 👽</option>
+                        <option value="an overly enthusiastic">Overly Enthusiastic 🎉</option>
+                        <option value="a bored teenager">Bored Teenager 😒</option>
+                        <option value="a wise old master">Wise Old Master 🧘</option>
+                    </select>
+                </div>
+
+                <button id="critiqueButton" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md shadow transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed">
+                    Get Critique
+                </button>
+                 <p id="apiStatus" class="text-sm text-center text-gray-500 mt-2"></p>
+
+                <div class="mt-4 flex-grow">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">The Verdict:</h3>
+                    <div id="critiqueOutput" class="critique-box h-64 p-4 border border-gray-300 rounded-md bg-gray-50 shadow-inner overflow-y-auto text-gray-800 whitespace-pre-wrap">
+                        Your critique will appear here...
+                    </div>
+                    <div id="loadingIndicator" class="hidden text-center mt-4">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                        <p class="text-blue-600">Thinking...</p>
+                    </div>
+                     <div id="errorMessage" class="hidden mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Canvas Setup and Drawing Logic ---
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        const colorPicker = document.getElementById('colorPicker');
+        const lineWidthSlider = document.getElementById('lineWidth');
+        const lineWidthValue = document.getElementById('lineWidthValue');
+        const penTool = document.getElementById('penTool');
+        const eraserTool = document.getElementById('eraserTool');
+        const clearCanvasBtn = document.getElementById('clearCanvasBtn');
+        const presetSelector = document.getElementById('presetSelector');
+
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        let currentTool = 'pen';
+
+        // --- Helper function to clear canvas and reset styles ---
+        function clearCanvasContent() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = colorPicker.value; // Use current color
+            ctx.fillStyle = 'black'; // Default fill
+            ctx.lineWidth = 3; // Default line width for starters
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.globalCompositeOperation = 'source-over';
+        }
+
+        // Initialize canvas
+        clearCanvasContent();
+
+        function getMousePos(canvasDom, event) {
+            const rect = canvasDom.getBoundingClientRect();
+            const clientX = event.clientX || event.touches[0].clientX;
+            const clientY = event.clientY || event.touches[0].clientY;
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const pos = getMousePos(canvas, e);
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(pos.x, pos.y);
+
+            if (currentTool === 'pen') {
+                ctx.strokeStyle = colorPicker.value;
+                ctx.lineWidth = lineWidthSlider.value; // Use slider value for drawing
+                ctx.globalCompositeOperation = 'source-over';
+            } else if (currentTool === 'eraser') {
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = lineWidthSlider.value; // Use slider value for erasing
+                ctx.globalCompositeOperation = 'destination-out';
+            }
+            ctx.stroke();
+            [lastX, lastY] = [pos.x, pos.y];
+        }
+
+        // Event Listeners for Drawing
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            const pos = getMousePos(canvas, e);
+            [lastX, lastY] = [pos.x, pos.y];
+            ctx.globalCompositeOperation = (currentTool === 'eraser') ? 'destination-out' : 'source-over';
+        });
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', () => isDrawing = false);
+        canvas.addEventListener('mouseout', () => isDrawing = false);
+
+        // Touch events
+        canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                e.preventDefault();
+                isDrawing = true;
+                const pos = getMousePos(canvas, e);
+                [lastX, lastY] = [pos.x, pos.y];
+                ctx.globalCompositeOperation = (currentTool === 'eraser') ? 'destination-out' : 'source-over';
+            }
+        }, { passive: false });
+        canvas.addEventListener('touchmove', (e) => {
+             if (e.touches.length === 1) {
+                e.preventDefault();
+                draw(e);
+             }
+        }, { passive: false });
+        canvas.addEventListener('touchend', () => isDrawing = false);
+        canvas.addEventListener('touchcancel', () => isDrawing = false);
+
+        // --- Toolbar Logic ---
+        lineWidthSlider.addEventListener('input', (e) => {
+            lineWidthValue.textContent = e.target.value;
+        });
+
+        penTool.addEventListener('click', () => {
+            currentTool = 'pen';
+            penTool.classList.add('active-tool');
+            eraserTool.classList.remove('active-tool');
+        });
+
+        eraserTool.addEventListener('click', () => {
+            currentTool = 'eraser';
+            eraserTool.classList.add('active-tool');
+            penTool.classList.remove('active-tool');
+        });
+
+        clearCanvasBtn.addEventListener('click', () => {
+             clearCanvasContent();
+             // Also reset slider value visual when clearing manually
+             lineWidthSlider.value = 3;
+             lineWidthValue.textContent = 3;
+        });
+
+        // --- Starter Drawing Functions ---
+        // (Previous functions: drawCat, drawHouse, drawStickFigure, drawSmiley, drawTree, drawCar, drawFlower, drawBoat, drawStar - definitions unchanged, but ensure they call clearCanvasContent())
+        function drawCat() {
+            clearCanvasContent();
+            ctx.strokeStyle = 'black'; ctx.lineWidth = 3; ctx.fillStyle = 'black';
+            ctx.beginPath(); ctx.arc(200, 150, 50, 0, Math.PI * 2); ctx.stroke(); // Head
+            ctx.beginPath(); ctx.moveTo(165, 110); ctx.lineTo(180, 80); ctx.lineTo(195, 110); ctx.closePath(); ctx.stroke(); // Left ear
+            ctx.beginPath(); ctx.moveTo(205, 110); ctx.lineTo(220, 80); ctx.lineTo(235, 110); ctx.closePath(); ctx.stroke(); // Right ear
+            ctx.beginPath(); ctx.arc(185, 140, 5, 0, Math.PI * 2); ctx.fill(); // Left eye
+            ctx.beginPath(); ctx.arc(215, 140, 5, 0, Math.PI * 2); ctx.fill(); // Right eye
+            ctx.beginPath(); ctx.moveTo(195, 155); ctx.lineTo(205, 155); ctx.lineTo(200, 160); ctx.closePath(); ctx.fill(); // Nose
+            ctx.beginPath(); // Whiskers
+            ctx.moveTo(160, 150); ctx.lineTo(130, 145); ctx.moveTo(160, 155); ctx.lineTo(130, 155); ctx.moveTo(160, 160); ctx.lineTo(130, 165);
+            ctx.moveTo(240, 150); ctx.lineTo(270, 145); ctx.moveTo(240, 155); ctx.lineTo(270, 155); ctx.moveTo(240, 160); ctx.lineTo(270, 165);
+            ctx.stroke();
+            ctx.beginPath(); ctx.ellipse(200, 250, 60, 40, 0, 0, Math.PI * 2); ctx.stroke(); // Body
+        }
+
+        function drawHouse() {
+            clearCanvasContent();
+            ctx.strokeStyle = 'brown'; ctx.lineWidth = 4;
+            ctx.fillStyle = '#f0e68c'; ctx.beginPath(); ctx.rect(100, 200, 200, 150); ctx.fill(); ctx.stroke(); // Main building
+            ctx.fillStyle = '#a0522d'; ctx.beginPath(); ctx.moveTo(80, 200); ctx.lineTo(200, 100); ctx.lineTo(320, 200); ctx.closePath(); ctx.fill(); ctx.stroke(); // Roof
+            ctx.fillStyle = '#8b4513'; ctx.beginPath(); ctx.rect(175, 270, 50, 80); ctx.fill(); ctx.stroke(); // Door
+            ctx.fillStyle = 'gold'; ctx.beginPath(); ctx.arc(215, 310, 5, 0, Math.PI*2); ctx.fill(); // Door knob
+            ctx.fillStyle = '#add8e6'; ctx.beginPath(); ctx.rect(120, 220, 40, 40); ctx.rect(240, 220, 40, 40); ctx.fill(); ctx.stroke(); // Windows
+            ctx.beginPath(); ctx.lineWidth = 1; ctx.strokeStyle = 'black'; // Window panes
+            ctx.moveTo(140, 220); ctx.lineTo(140, 260); ctx.moveTo(120, 240); ctx.lineTo(160, 240);
+            ctx.moveTo(260, 220); ctx.lineTo(260, 260); ctx.moveTo(240, 240); ctx.lineTo(280, 240);
+            ctx.stroke();
+        }
+
+        function drawStickFigure() {
+            clearCanvasContent();
+            ctx.strokeStyle = 'black'; ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.arc(200, 100, 30, 0, Math.PI * 2); ctx.stroke(); // Head
+            ctx.beginPath(); ctx.moveTo(200, 130); ctx.lineTo(200, 230); ctx.stroke(); // Body
+            ctx.beginPath(); ctx.moveTo(200, 160); ctx.lineTo(150, 190); ctx.moveTo(200, 160); ctx.lineTo(250, 190); ctx.stroke(); // Arms
+            ctx.beginPath(); ctx.moveTo(200, 230); ctx.lineTo(160, 300); ctx.moveTo(200, 230); ctx.lineTo(240, 300); ctx.stroke(); // Legs
+        }
+
+         function drawSmiley() {
+            clearCanvasContent();
+            ctx.strokeStyle = 'orange'; ctx.fillStyle = 'yellow'; ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.arc(200, 200, 100, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); // Face
+            ctx.fillStyle = 'black';
+            ctx.beginPath(); ctx.arc(165, 170, 15, 0, Math.PI * 2); ctx.fill(); // Left eye
+            ctx.beginPath(); ctx.arc(235, 170, 15, 0, Math.PI * 2); ctx.fill(); // Right eye
+            ctx.beginPath(); ctx.arc(200, 210, 60, 0.1 * Math.PI, 0.9 * Math.PI); ctx.lineWidth = 5; ctx.strokeStyle = 'black'; ctx.stroke(); // Smile
+        }
+
+        function drawTree() {
+            clearCanvasContent();
+            ctx.fillStyle = '#8B4513'; ctx.fillRect(180, 250, 40, 100); // Trunk
+            ctx.fillStyle = '#228B22'; // Leaves
+            ctx.beginPath(); ctx.arc(200, 180, 70, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(160, 220, 50, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(240, 220, 50, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(200, 250, 60, 0, Math.PI * 2); ctx.fill();
+        }
+
+         function drawCar() {
+            clearCanvasContent();
+            ctx.strokeStyle = 'black'; ctx.lineWidth = 3; ctx.fillStyle = 'red';
+            ctx.beginPath(); ctx.rect(100, 250, 200, 50); ctx.fill(); ctx.stroke(); // Body
+            ctx.fillStyle = '#ffcccc'; ctx.beginPath(); // Cabin
+            ctx.moveTo(130, 250); ctx.lineTo(160, 200); ctx.lineTo(240, 200); ctx.lineTo(270, 250); ctx.closePath(); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = 'black'; // Wheels
+            ctx.beginPath(); ctx.arc(140, 300, 25, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(260, 300, 25, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = 'grey'; // Wheel hubs
+            ctx.beginPath(); ctx.arc(140, 300, 10, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(260, 300, 10, 0, Math.PI * 2); ctx.fill();
+        }
+
+        function drawFlower() {
+            clearCanvasContent();
+            ctx.strokeStyle = 'black'; ctx.lineWidth = 2;
+            ctx.strokeStyle = 'green'; ctx.beginPath(); ctx.moveTo(200, 350); ctx.lineTo(200, 200); ctx.stroke(); // Stem
+            ctx.fillStyle = 'yellow'; ctx.beginPath(); ctx.arc(200, 180, 30, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); // Center
+            ctx.fillStyle = 'pink'; ctx.strokeStyle = 'red'; // Petals
+            for (let i = 0; i < 6; i++) {
+                ctx.beginPath();
+                ctx.ellipse(200 + 45 * Math.cos(i * Math.PI / 3), 180 + 45 * Math.sin(i * Math.PI / 3), 30, 15, i * Math.PI / 3, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+            }
+        }
+
+        function drawBoat() {
+            clearCanvasContent();
+            ctx.strokeStyle = 'black'; ctx.lineWidth = 3;
+            ctx.fillStyle = '#D2B48C'; ctx.beginPath(); // Hull
+            ctx.moveTo(100, 250); ctx.lineTo(300, 250); ctx.lineTo(250, 300); ctx.lineTo(150, 300); ctx.closePath(); ctx.fill(); ctx.stroke();
+            ctx.strokeStyle = '#8B4513'; ctx.beginPath(); ctx.moveTo(200, 250); ctx.lineTo(200, 150); ctx.stroke(); // Mast
+            ctx.fillStyle = 'white'; ctx.strokeStyle = 'black'; ctx.beginPath(); // Sail
+            ctx.moveTo(205, 160); ctx.lineTo(205, 240); ctx.lineTo(280, 240); ctx.closePath(); ctx.fill(); ctx.stroke();
+            ctx.strokeStyle = 'blue'; ctx.lineWidth = 2; ctx.beginPath(); // Water
+            ctx.moveTo(50, 310); ctx.quadraticCurveTo(100, 300, 150, 310); ctx.moveTo(150, 310); ctx.quadraticCurveTo(200, 320, 250, 310); ctx.moveTo(250, 310); ctx.quadraticCurveTo(300, 300, 350, 310);
+            ctx.stroke();
+        }
+
+        function drawStar() {
+            clearCanvasContent();
+            ctx.strokeStyle = 'black'; ctx.fillStyle = 'gold'; ctx.lineWidth = 3;
+            const centerX = 200, centerY = 200, outerRadius = 80, innerRadius = 35, numPoints = 5;
+            ctx.beginPath();
+            for (let i = 0; i < numPoints * 2; i++) {
+                const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                const angle = Math.PI / numPoints * i - Math.PI / 2;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+                if (i === 0) { ctx.moveTo(x, y); } else { ctx.lineTo(x, y); }
+            }
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+        }
+
+        // --- NEW Detailed Starter Functions ---
+        function drawRobot() {
+            clearCanvasContent();
+            ctx.strokeStyle = 'grey'; ctx.lineWidth = 3; ctx.fillStyle = '#E0E0E0'; // Light grey fill
+
+            // Head
+            ctx.beginPath(); ctx.rect(170, 80, 60, 50); ctx.fill(); ctx.stroke(); // Head box
+            ctx.fillStyle = 'black';
+            ctx.beginPath(); ctx.arc(190, 100, 5, 0, Math.PI * 2); ctx.fill(); // Left eye
+            ctx.beginPath(); ctx.arc(210, 100, 5, 0, Math.PI * 2); ctx.fill(); // Right eye
+            ctx.beginPath(); ctx.rect(185, 115, 30, 5); ctx.fill(); // Mouth grill
+
+            // Antenna
+            ctx.strokeStyle = 'darkgrey'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(200, 80); ctx.lineTo(200, 60); ctx.stroke();
+            ctx.fillStyle = 'red'; ctx.beginPath(); ctx.arc(200, 55, 5, 0, Math.PI * 2); ctx.fill();
+
+            // Body
+            ctx.strokeStyle = 'grey'; ctx.lineWidth = 3; ctx.fillStyle = '#C0C0C0'; // Silver fill
+            ctx.beginPath(); ctx.rect(150, 140, 100, 120); ctx.fill(); ctx.stroke(); // Torso
+
+            // Arms
+            ctx.beginPath(); ctx.rect(110, 150, 30, 80); ctx.fill(); ctx.stroke(); // Left arm
+            ctx.beginPath(); ctx.rect(260, 150, 30, 80); ctx.fill(); ctx.stroke(); // Right arm
+            // Joints
+            ctx.fillStyle = 'grey';
+            ctx.beginPath(); ctx.arc(165, 150, 10, 0, Math.PI*2); ctx.fill(); // Left shoulder
+            ctx.beginPath(); ctx.arc(235, 150, 10, 0, Math.PI*2); ctx.fill(); // Right shoulder
+            ctx.beginPath(); ctx.arc(125, 230, 10, 0, Math.PI*2); ctx.fill(); // Left hand
+            ctx.beginPath(); ctx.arc(275, 230, 10, 0, Math.PI*2); ctx.fill(); // Right hand
+
+            // Legs
+            ctx.beginPath(); ctx.rect(160, 270, 30, 80); ctx.fill(); ctx.stroke(); // Left leg
+            ctx.beginPath(); ctx.rect(210, 270, 30, 80); ctx.fill(); ctx.stroke(); // Right leg
+            // Feet
+            ctx.fillStyle = 'darkgrey';
+            ctx.beginPath(); ctx.ellipse(175, 355, 25, 10, 0, 0, Math.PI * 2); ctx.fill(); // Left foot
+            ctx.beginPath(); ctx.ellipse(225, 355, 25, 10, 0, 0, Math.PI * 2); ctx.fill(); // Right foot
+        }
+
+        function drawButterfly() {
+            clearCanvasContent();
+            ctx.lineWidth = 2;
+
+            // Body
+            ctx.fillStyle = '#6B4226'; // Brown
+            ctx.beginPath();
+            ctx.ellipse(200, 200, 10, 40, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Antennae
+            ctx.strokeStyle = 'black';
+            ctx.beginPath(); ctx.moveTo(200, 160); ctx.quadraticCurveTo(180, 140, 170, 120); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(200, 160); ctx.quadraticCurveTo(220, 140, 230, 120); ctx.stroke();
+            ctx.fillStyle = 'black';
+            ctx.beginPath(); ctx.arc(170, 120, 3, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(230, 120, 3, 0, Math.PI*2); ctx.fill();
+
+
+            // Wings - using Bezier curves for more shape
+            // Left Top Wing
+            ctx.fillStyle = 'orange'; ctx.strokeStyle = 'black';
+            ctx.beginPath();
+            ctx.moveTo(200, 180); // Connect to body
+            ctx.bezierCurveTo(100, 100, 80, 200, 200, 210); // Outer curve
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+            // Left Bottom Wing
+            ctx.fillStyle = 'yellow';
+            ctx.beginPath();
+            ctx.moveTo(200, 210); // Connect to body
+            ctx.bezierCurveTo(100, 300, 120, 280, 200, 230); // Outer curve
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+
+            // Right Top Wing
+            ctx.fillStyle = 'orange';
+            ctx.beginPath();
+            ctx.moveTo(200, 180); // Connect to body
+            ctx.bezierCurveTo(300, 100, 320, 200, 200, 210); // Outer curve
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+            // Right Bottom Wing
+            ctx.fillStyle = 'yellow';
+            ctx.beginPath();
+            ctx.moveTo(200, 210); // Connect to body
+            ctx.bezierCurveTo(300, 300, 280, 280, 200, 230); // Outer curve
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+
+            // Simple Wing Details (Spots)
+            ctx.fillStyle = 'red';
+            ctx.beginPath(); ctx.arc(140, 160, 8, 0, Math.PI*2); ctx.fill(); // Top left
+            ctx.beginPath(); ctx.arc(260, 160, 8, 0, Math.PI*2); ctx.fill(); // Top right
+            ctx.fillStyle = 'blue';
+            ctx.beginPath(); ctx.arc(160, 250, 6, 0, Math.PI*2); ctx.fill(); // Bottom left
+            ctx.beginPath(); ctx.arc(240, 250, 6, 0, Math.PI*2); ctx.fill(); // Bottom right
+        }
+
+        function drawLandscape() {
+            clearCanvasContent();
+
+            // Sky
+            ctx.fillStyle = '#87CEEB'; // SkyBlue
+            ctx.fillRect(0, 0, canvas.width, 250); // Upper part of canvas
+
+            // Sun
+            ctx.fillStyle = 'yellow';
+            ctx.beginPath(); ctx.arc(300, 80, 30, 0, Math.PI * 2); ctx.fill();
+
+            // Ground
+            ctx.fillStyle = '#90EE90'; // LightGreen
+            ctx.fillRect(0, 250, canvas.width, 150); // Lower part
+
+            // Mountains
+            ctx.fillStyle = 'grey'; ctx.strokeStyle = 'darkgrey'; ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, 250); // Start at horizon left
+            ctx.lineTo(80, 180); // Peak 1
+            ctx.lineTo(160, 250); // Valley 1
+            ctx.lineTo(220, 150); // Peak 2 (higher)
+            ctx.lineTo(300, 250); // Valley 2
+            ctx.lineTo(350, 200); // Peak 3
+            ctx.lineTo(400, 250); // Horizon right
+            ctx.closePath();
+            ctx.fill(); ctx.stroke();
+
+            // Simple Cloud
+            ctx.fillStyle = 'white'; ctx.lineWidth = 0; // No outline for cloud
+            ctx.beginPath(); ctx.arc(100, 100, 20, 0, Math.PI * 2); ctx.fill(); // Left part
+            ctx.beginPath(); ctx.arc(130, 95, 25, 0, Math.PI * 2); ctx.fill(); // Middle part
+            ctx.beginPath(); ctx.arc(160, 100, 20, 0, Math.PI * 2); ctx.fill(); // Right part
+            ctx.fillRect(100, 90, 60, 30); // Base rectangle to connect circles
+        }
+
+
+        // --- Starter Selector Logic ---
+        presetSelector.addEventListener('change', (e) => {
+            const selectedStarter = e.target.value;
+            switch (selectedStarter) {
+                case 'cat': drawCat(); break;
+                case 'house': drawHouse(); break;
+                case 'stickman': drawStickFigure(); break;
+                case 'smiley': drawSmiley(); break;
+                case 'tree': drawTree(); break;
+                case 'car': drawCar(); break;
+                case 'flower': drawFlower(); break;
+                case 'boat': drawBoat(); break;
+                case 'star': drawStar(); break;
+                case 'robot': drawRobot(); break; // New case
+                case 'butterfly': drawButterfly(); break; // New case
+                case 'landscape': drawLandscape(); break; // New case
+                case '':
+                default: clearCanvasContent(); break;
+            }
+             // Reset line width slider visual for starters
+             lineWidthSlider.value = 3; // Assuming 3 is default for starters
+             lineWidthValue.textContent = 3;
+        });
+
+
+        // --- Prompt API Logic (unchanged) ---
+        const critiqueButton = document.getElementById('critiqueButton');
+        const personalitySelect = document.getElementById('personality');
+        const critiqueOutput = document.getElementById('critiqueOutput');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const apiStatus = document.getElementById('apiStatus');
+        const errorMessage = document.getElementById('errorMessage');
+
+        let modelAvailable = false;
+
+        function showError(message) {
+            errorMessage.textContent = `Error: ${message}`;
+            errorMessage.classList.remove('hidden');
+            loadingIndicator.classList.add('hidden');
+            critiqueButton.disabled = !modelAvailable;
+            console.error("Prompt API Error:", message);
+        }
+
+        function hideError() {
+            errorMessage.classList.add('hidden');
+        }
+
+        async function initializePromptAPI() {
+            if (typeof LanguageModel === 'undefined') {
+                apiStatus.textContent = 'Prompt API not supported.';
+                critiqueButton.disabled = true;
+                showError("The Prompt API (LanguageModel) is not available in your browser. Try a compatible browser like Chrome with experimental flags enabled.");
+                return;
+            }
+
+            try {
+                apiStatus.textContent = 'Checking AI model availability...';
+                const availability = await LanguageModel.availability({
+                    expectedInputs: [{ type: "image" }]
+                });
+
+                switch (availability) {
+                    case 'available':
+                        apiStatus.textContent = 'AI Model Ready.';
+                        modelAvailable = true;
+                        critiqueButton.disabled = false;
+                        break;
+                    case 'downloadable':
+                    case 'downloading':
+                        apiStatus.textContent = 'AI Model requires download (will start on first critique).';
+                        modelAvailable = true;
+                        critiqueButton.disabled = false;
+                        break;
+                    case 'unavailable':
+                    default:
+                        apiStatus.textContent = 'AI Model (with image support) unavailable.';
+                        critiqueButton.disabled = true;
+                        showError("No AI model supporting image input found.");
+                        modelAvailable = false;
+                        break;
+                }
+            } catch (error) {
+                apiStatus.textContent = 'Error checking AI availability.';
+                critiqueButton.disabled = true;
+                showError(`Failed to check Prompt API availability: ${error.message}`);
+                modelAvailable = false;
+            }
+        }
+
+
+        critiqueButton.addEventListener('click', async () => {
+            if (!modelAvailable) {
+                 showError("Cannot get critique: AI Model is not available.");
+                 return;
+            }
+
+            hideError();
+            const personality = personalitySelect.value;
+            critiqueOutput.textContent = '';
+            loadingIndicator.classList.remove('hidden');
+            critiqueButton.disabled = true;
+            apiStatus.textContent = 'Creating AI session...';
+
+            let session = null;
+
+            try {
+                session = await LanguageModel.create({
+                    expectedInputs: [{ type: "image" }],
+                    monitor(m) {
+                        m.addEventListener("downloadprogress", e => {
+                            const percent = Math.round(e.loaded * 100);
+                            apiStatus.textContent = `Downloading model: ${percent}%`;
+                            console.log(`Download progress: ${percent}%`);
+                        });
+                         m.addEventListener("load", () => {
+                             apiStatus.textContent = 'AI session ready. Generating critique...';
+                         });
+                         m.addEventListener("error", () => {
+                             apiStatus.textContent = 'Model download failed.';
+                         });
+                    }
+                });
+
+                apiStatus.textContent = 'Generating critique...';
+                const imageContent = canvas;
+
+                const prompt = [
+                    `You are ${personality} art critic. First, state what you think the following drawing depicts (e.g., "This looks like a [subject]."). Then, provide a critique of the drawing based on your interpretation and personality. Keep the total response concise (around 3-5 sentences).`,
+                    { type: "image", content: imageContent }
+                 ];
+
+                const stream = await session.promptStreaming(prompt);
+                critiqueOutput.textContent = '';
+
+                const reader = stream.getReader();
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    critiqueOutput.textContent += value;
+                }
+
+                apiStatus.textContent = 'Critique received.';
+
+            } catch (error) {
+                showError(`Critique generation failed: ${error.message} (Name: ${error.name})`);
+                apiStatus.textContent = 'Critique Failed.';
+
+            } finally {
+                 if (session) {
+                    try {
+                        session.destroy();
+                        console.log("Session destroyed.");
+                    } catch (destroyError) {
+                        console.error("Error destroying session:", destroyError);
+                    }
+                 }
+                loadingIndicator.classList.add('hidden');
+                critiqueButton.disabled = !modelAvailable;
+                 if (modelAvailable && !errorMessage.classList.contains('hidden')) {
+                     apiStatus.textContent = 'Critique Failed. Ready for next attempt.';
+                 } else if (modelAvailable) {
+                    apiStatus.textContent = 'AI Model Ready.';
+                 }
+            }
+        });
+
+        // Initialize API availability check on load
+        initializePromptAPI();
+
+    </script>
+
+</body>
+</html>
