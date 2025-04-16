@@ -438,6 +438,7 @@
         const errorMessage = document.getElementById('errorMessage');
 
         let modelAvailable = false;
+        let keepaliveModel = null;
 
         function showError(message) {
             errorMessage.textContent = `Error: ${message}`;
@@ -485,6 +486,7 @@
                         critiqueButton.disabled = true;
                         showError("No AI model supporting image input found.");
                         modelAvailable = false;
+                        keepaliveModel = await LanguageModel.create({expectedInputs: [{ type: "image" }]);
                         break;
                 }
             } catch (error) {
