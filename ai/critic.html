@@ -473,6 +473,7 @@
                         apiStatus.textContent = 'AI Model Ready.';
                         modelAvailable = true;
                         critiqueButton.disabled = false;
+                        keepaliveModel = await LanguageModel.create({expectedInputs: [{ type: "image" }]});
                         break;
                     case 'downloadable':
                     case 'downloading':
@@ -486,7 +487,6 @@
                         critiqueButton.disabled = true;
                         showError("No AI model supporting image input found.");
                         modelAvailable = false;
-                        keepaliveModel = await LanguageModel.create({expectedInputs: [{ type: "image" }]});
                         break;
                 }
             } catch (error) {
