@@ -484,7 +484,7 @@ Make the website visually appealing and functional.`;
             try {
                  const fullPrompt = promptPayload;
                  console.log("Starting prompt stream...");
-                 const stream = await sessionToUse.promptStreaming(fullPrompt, { signal: currentAbortController.signal });
+                 const stream = await sessionToUse.promptStreaming(fullPrompt, { signal: currentAbortController.signal, responseConstraint: /^</ });
 
                  for await (const chunk of stream) {
                      let currentChunk = chunk;
