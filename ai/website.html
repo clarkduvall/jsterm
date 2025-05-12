@@ -448,7 +448,7 @@ Make the website visually appealing and functional.`;
 
                     const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error(`Session creation timed out after ${SESSION_CREATION_TIMEOUT}ms`)), SESSION_CREATION_TIMEOUT));
                     console.log("Attempting LanguageModel.create...");
-                    sessionToUse = await Promise.race([ LanguageModel.create({ systemPrompt: SYSTEM_PROMPT }), timeoutPromise ]);
+                    sessionToUse = await Promise.race([ LanguageModel.create({ initialPrompts: [{"role":"system", "content":SYSTEM_PROMPT}] }), timeoutPromise ]);
                     console.log("LanguageModel.create call finished.");
 
                     languageModelSession = sessionToUse;
