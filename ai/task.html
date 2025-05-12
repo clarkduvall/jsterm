@@ -346,7 +346,7 @@ Example response format:
 Do NOT include any other text, explanation, markdown formatting, or code blocks around the JSON. Just the raw JSON object.`;
 
                 taskBreakdownSession = await LanguageModel.create({
-                    systemPrompt: breakdownSystemPrompt,
+                    initialPrompts: [{"role":"system", "content":breakdownSystemPrompt}],
                     monitor: (m) => {
                        m.addEventListener("downloadprogress", e => {
                           loadingIndicator.textContent = `Downloading model... ${(e.loaded * 100).toFixed(0)}%`;
@@ -384,7 +384,7 @@ Do NOT include any other text, explanation, markdown formatting, or code blocks 
 
                 console.log("Creating main interaction session...");
                 currentSession = await LanguageModel.create({
-                    systemPrompt: `You are a helpful assistant. The user is working on the overall main task: "${mainTask}". Your goal is to help them with specific sub-tasks they ask about. Provide concise and actionable advice related ONLY to the current sub-task context provided by the user, keeping the main task in mind. Use Markdown for formatting lists, code blocks, bold text, etc., where appropriate.`
+                    initialPrompts: [{"role":"system", "content":`You are a helpful assistant. The user is working on the overall main task: "${mainTask}". Your goal is to help them with specific sub-tasks they ask about. Provide concise and actionable advice related ONLY to the current sub-task context provided by the user, keeping the main task in mind. Use Markdown for formatting lists, code blocks, bold text, etc., where appropriate.`}]
                 });
                  console.log("Main interaction session created.");
 
