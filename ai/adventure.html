@@ -345,7 +345,7 @@
 
             try {
                 // Create the main game session with the system prompt
-                gameSession = await LanguageModel.create({ systemPrompt });
+                gameSession = await LanguageModel.create({ initialPrompts: [{"role": "system", content: systemPrompt}] });
                 addToConsole("System ready. Adventure awaits...", "system");
 
                 // Get the initial game state description using streaming
