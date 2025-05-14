@@ -123,6 +123,7 @@
         let voicesLoaded = false;
         let isSpeaking = false;
         let ttsQueue = [];
+        let audioSessionKeepalive = LanguageModel.create({ expectedInputs: [{ type: 'audio' }] });
 
         // --- Utility Functions ---
         function updateStatus(text, state = 'info') { /* (No changes) */ console.log("Status:", text); statusText.textContent = text; listeningDot.classList.add('hidden'); statusDiv.classList.remove( 'bg-blue-500', 'bg-yellow-500', 'bg-green-500', 'bg-red-500', 'bg-gray-500', 'bg-purple-500', 'bg-gray-600', 'hover:bg-blue-600', 'cursor-pointer', 'clickable-status' ); globalErrorDiv.classList.add('hidden'); switch (state) { case 'listening': statusDiv.classList.add('bg-blue-500'); listeningDot.classList.remove('hidden'); statusDiv.classList.add('clickable-status'); break; case 'processing': statusDiv.classList.add('bg-yellow-500'); break; case 'success': statusDiv.classList.add('bg-green-500'); break; case 'error': statusDiv.classList.add('bg-red-500'); globalErrorDiv.textContent = text; globalErrorDiv.classList.remove('hidden'); statusDiv.classList.add('clickable-status'); break; case 'downloading': statusDiv.classList.add('bg-purple-500'); break; case 'stopped': statusDiv.classList.add('bg-gray-600'); statusDiv.classList.add('clickable-status'); break; default: statusDiv.classList.add('bg-gray-500'); if (isInitialized) { statusDiv.classList.add('clickable-status'); } } }
