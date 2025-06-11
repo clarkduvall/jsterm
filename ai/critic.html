@@ -544,9 +544,9 @@
                 }
 
                 // --- Construct the final prompt ---
-                const prompt = [
-                    instruction, // Use the potentially modified instruction
-                    { type: "image", content: imageContent }
+                const prompt = [{ role: 'user',
+                                 content: [{ type: 'text', value: instruction }, // Use the potentially modified instruction
+                    { type: "image", valud: imageContent }]}
                  ];
 
                 // Get critique using the new session
