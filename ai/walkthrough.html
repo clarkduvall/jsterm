@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="origin-trial" content="Ap1cotTism+zOrTvJQZP5RUjiDSTY5pEQI9xu7/vvw0KA5jSEpDfY+ToK9jdKTtnOJUj+cXVyPr7e0ewq8usFA8AAAB2eyJvcmlnaW4iOiJodHRwczovL2NsYXJrZHV2YWxsLmNvbTo0NDMiLCJmZWF0dXJlIjoiQUlQcm9tcHRBUElNdWx0aW1vZGFsSW5wdXQiLCJleHBpcnkiOjE3NzQzMTA0MDAsImlzU3ViZG9tYWluIjp0cnVlfQ==">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web LLM Prompt API Walkthrough</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Prism.js CSS for syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" rel="stylesheet" />
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+            color: #334155; /* slate-700 */
+        }
+        /* Style for the container of the code editor */
+        .code-editor-container {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: #272822; /* Prism Okaidia background */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            border: 1px solid #475569; /* slate-600 */
+            min-height: 120px; /* Set a minimum height */
+            overflow-y: auto;
+            resize: vertical;
+        }
+        /* Make the actual code block editable and focusable */
+        .code-editor-container pre, .code-editor-container code {
+             margin: 0;
+             padding: 0;
+             background: none !important;
+             height: 100%;
+             font-size: 0.875rem;
+        }
+        .code-editor-container [contenteditable="true"]:focus {
+            outline: none;
+        }
+
+        .output-box {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: #f1f5f9; /* slate-100 */
+            color: #1e293b; /* slate-800 */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            min-height: 80px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            border: 1px solid #e2e8f0; /* slate-200 */
+        }
+        .run-btn, .abort-btn {
+            color: white;
+            font-weight: 600;
+            padding: 0.5rem 1.5rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s;
+        }
+        .run-btn {
+            background-color: #4f46e5; /* indigo-600 */
+        }
+        .run-btn:hover {
+            background-color: #4338ca; /* indigo-700 */
+        }
+        .run-btn:disabled {
+            background-color: #a5b4fc; /* indigo-300 */
+            cursor: not-allowed;
+        }
+        .abort-btn {
+            background-color: #dc2626; /* red-600 */
+        }
+        .abort-btn:hover {
+             background-color: #b91c1c; /* red-700 */
+        }
+        .abort-btn:disabled {
+            background-color: #fca5a5; /* red-300 */
+            cursor: not-allowed;
+        }
+
+        h1, h2, h3 {
+            font-weight: 700;
+            color: #1e293b; /* slate-800 */
+        }
+        .section-card {
+            background-color: white;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .output-container {
+            width: 100%;
+        }
+        p code, li code {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: #e2e8f0; /* slate-200 */
+            color: #1e293b; /* slate-800 */
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-size: 0.875em;
+        }
+        .performance-note {
+            background-color: #f0fdf4; /* green-50 */
+            border: 1px solid #bbf7d0; /* green-200 */
+            border-left: 4px solid #4ade80; /* green-400 */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        .performance-note svg {
+            flex-shrink: 0;
+            width: 1.25rem;
+            height: 1.25rem;
+            margin-top: 0.125rem;
+            color: #22c55e; /* green-500 */
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <!-- Prism.js JS for syntax highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold mb-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-transparent bg-clip-text">Web LLM Prompt API</h1>
+            <p class="text-lg md:text-xl text-slate-600">An interactive guide to the future of on-device AI in the browser.</p>
+        </header>
+        
+        <div class="section-card !bg-indigo-50 border border-indigo-200">
+            <p class="text-slate-800">
+                The <strong>Web LLM Prompt API</strong> gives web developers direct access to large language models running entirely on a user's device. This on-device approach offers significant benefits, including enhanced <strong>privacy</strong> (user data never leaves the machine) and the ability to run <strong>offline</strong> once the model is downloaded.
+            </p>
+            <p class="mt-4 text-slate-800">
+                The API is available via an <a href="https://developer.chrome.com/origintrials/#/view_trial/2533837740349325313" target="_blank" class="text-indigo-600 font-semibold hover:underline">Origin Trial</a> starting in <strong>Chrome 139</strong>, or by enabling the <code>chrome://flags/#prompt-api-for-gemini-nano-multimodal-input</code> flag in your browser. For more information, check out the official <a href="https://developer.chrome.com/docs/ai/prompt-api" target="_blank" class="text-indigo-600 font-semibold hover:underline">documentation</a>.
+            </p>
+            <div id="api-status-container" class="mt-4">
+                <!-- Status indicator will be injected here -->
+            </div>
+        </div>
+
+        <!-- Availability Section -->
+        <div id="availability" class="section-card">
+            <h2 class="text-2xl mb-4">1. Checking Availability</h2>
+            <p class="mb-4">Before trying to create a model session, you should check if the browser supports the API and if the required model data is ready. The <code>LanguageModel.availability()</code> method returns the status, which can be <code>available</code>, <code>downloadable</code>, <code>downloading</code>, or <code>unavailable</code>.</p>
+            <div class="code-editor-container w-full mb-4">
+                <pre><code id="code-availability" class="language-js" contenteditable="true">const availability = await LanguageModel.availability();
+addOutput(`Model availability: ${availability}`);
+</code></pre>
+            </div>
+            <div class="flex items-start justify-between gap-4">
+                <button class="run-btn" data-code="availability">Run</button>
+                <div class="output-container">
+                    <pre id="output-availability" class="output-box"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Creation & Download Progress Section -->
+        <div id="creation-download" class="section-card">
+            <h2 class="text-2xl mb-4">2. Creating a Session & Handling Downloads</h2>
+            <p class="mb-4">If the model isn't available locally, creating a session with <code>LanguageModel.create()</code> may trigger a download. You can show the progress to the user with the <code>monitor</code> option.</p>
+             <div class="code-editor-container w-full mb-4">
+                <pre><code id="code-creation-progress" class="language-js" contenteditable="true">const session = await LanguageModel.create({
+    monitor: (monitor) => {
+        monitor.addEventListener("downloadprogress", (e) => {
+             // e.loaded is a value between 0 and 1
+            const percent = Math.round(e.loaded * 100);
+            addOutput(`Downloading... ${percent}%`, true);
+        });
+    }
+});
+addOutput("Session created! Download (if any) is complete.", true);
+</code></pre>
+            </div>
+            <div class="flex items-start justify-between gap-4">
+                <button class="run-btn" data-code="creation-progress">Run</button>
+                <div class="output-container">
+                    <pre id="output-creation-progress" class="output-box"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Creation with Params Section -->
+        <div id="creation-params-section" class="section-card">
+            <h2 class="text-2xl mb-4">3. Creating a Session with Parameters</h2>
+            <p class="mb-4">You can control the model's creativity by setting parameters like <code>temperature</code> (randomness) and <code>topK</code> (limits the pool of next words). Remember, sessions are <strong>stateful</strong>—each prompt adds to the conversation's context, allowing for follow-up questions that build on previous interactions.</p>
+             <div class="performance-note">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z" clip-rule="evenodd" /></svg>
+                <div>
+                    <h4 class="font-semibold text-green-800">Performance Note</h4>
+                    <p class="text-green-700">Creating a session pre-warms the model. You should call <code>LanguageModel.create()</code> as soon as you know the model will be needed to avoid a delay on the first prompt.</p>
+                </div>
+            </div>
+            <div class="code-editor-container w-full mb-4">
+                <pre><code id="code-creation-params" class="language-js" contenteditable="true">const session = await LanguageModel.create({
+    temperature: 0.8,
+    topK: 10
+});
+addOutput("Session with custom parameters created!");
+const result = await session.prompt("Tell me a one-sentence joke about a computer.");
+addOutput("\n\n" + result);
+</code></pre>
+            </div>
+            <div class="flex items-start justify-between gap-4">
+                <button class="run-btn" data-code="creation-params">Run</button>
+                <div class="output-container">
+                    <pre id="output-creation-params" class="output-box"></pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Prompting Section -->
+        <div id="prompting" class="section-card">
+            <h2 class="text-2xl mb-4">4. Basic Prompting</h2>
+            <p class="mb-4">The <code>session.prompt()</code> method sends a single request to the model and returns the complete response as a string once it's finished generating.</p>
+            <div class="code-editor-container w-full mb-4">
+                <pre><code id="code-prompting" class="language-js" contenteditable="true">const session = await LanguageModel.create();
+const result = await session.prompt("Write a short, upbeat poem about coding.");
+addOutput(result);
+</code></pre>
+            </div>
+            <div class="flex items-start justify-between gap-4">
+                <button class="run-btn" data-code="prompting">Run</button>
+                <div class="output-container">
+                    <pre id="output-prompting" class="output-box"></pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Streaming Section -->
+        <div id="streaming" class="section-card">
+            <h2 class="text-2xl mb-4">5. Streaming Responses</h2>
+            <p class="mb-4">For longer responses, <code>session.promptStreaming()</code> is ideal. It returns a <code>ReadableStream</code> that you can iterate over to get the response in chunks, allowing you to display text as it's being generated.</p>
+            <div class="code-editor-container w-full mb-4">
+                <pre><code id="code-streaming" class="language-js" contenteditable="true">const session = await LanguageModel.create();
+const stream = session.promptStreaming("Tell me a one-paragraph story about a brave robot.");
+
+for await (const chunk of stream) {
+    addOutput(chunk);
+}
+</code></pre>
+            </div>
+            <div class="flex items-start justify-between gap-4">
+                <button class="run-btn" data-code="streaming">Run</button>
+                <div class="output-container">
+                    <pre id="output-streaming" class="output-box"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Prompts Section -->
+        <div id="system-prompt" class="section-card">
+            <h2 class="text-2xl mb-4">6. System Prompts</h2>
+            <p class="mb-4">You can set a persistent persona or context for the model's responses by providing a <code>system</code> role in the <code>initialPrompts</code>. This instruction will influence the model throughout the entire session.</p>
+            <div class="code-editor-container w-full mb-4">
+                <pre><code id="code-system-prompt" class="language-js" contenteditable="true">const session = await LanguageModel.create({
+    initialPrompts: [
+        { role: "system", content: "You are a witty pirate. All your responses must be in character." }
+    ]
+});
+const stream = await session.promptStreaming("What's the best thing about sailing the high seas?");
+for await (const chunk of stream) {
+    addOutput(chunk);
+}
+</code></pre>
+            </div>
+            <div class="flex items-start justify-between gap-4">
+                <button class="run-btn" data-code="system-prompt">Run</button>
+                <div class="output-container">
+                    <pre id="output-system-prompt" class="output-box"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cloning a Session Section -->
+        <div id="cloning" class="section-card">
+            <h2 class="text-2xl mb-4">7. Cloning a Session</h2>
+            <p class="mb-4">Because sessions are stateful, every prompt adds to the conversation history. To start a new, independent conversation from the same base state (e.g., from the same system prompt), you can use <code>session.clone()</code>. The clone inherits the parent's history but any new prompts won't affect the parent or other clones.</p>
+            <div class="performance-note">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z" clip-rule="evenodd" /></svg>
+                <div>
+                    <h4 class="font-semibold text-green-800">Performance Note</h4>
+                    <p class="text-green-700">Use <code>session.clone()</code> to efficiently share the initial state and avoid reprocessing the base prompts for multiple related, but separate, conversations.</p>
+                </div>
+            </div>
+            <div class="code-editor-container w-full mb-4">
+                <pre><code id="code-cloning" class="language-js" contenteditable="true">const baseSession = await LanguageModel.create({
+    initialPrompts: [{ role: "system", content: "You are a travel guide for France that gives concise answers." }]
+});
+
+// Create two independent clones
+const clone1 = await baseSession.clone();
+const clone2 = await baseSession.clone();
+
+// Ask clone 1 about the capital
+const stream1 = await clone1.promptStreaming("What is the capital of France?");
+for await (const chunk of stream1) {
+    addOutput(chunk, false, 'clone1');
+}
+
+// Ask clone 2 about pastries
+const stream2 = await clone2.promptStreaming("What color is a croissant?");
+for await (const chunk of stream2) {
+    addOutput(chunk, false, 'clone2');
+}
+</code></pre>
+            </div>
+            <div class="flex items-start justify-between gap-4">
+                <button class="run-btn" data-code="cloning">Run</button>
+                <div class="w-full flex flex-col gap-4">
+                     <div class="output-container">
+                        <pre id="output-cloning-clone1" class="output-box"></pre>
+                    </div>
+                     <div class="output-container">
+                        <pre id="output-cloning-clone2" class="output-box"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Multi-shot Prompting Section -->
+        <div id="multishot" class="section-card">
+            <h2 class="text-2xl mb-4">8. Multi-shot Prompting</h2>
+            <p class="mb-4">You can guide the model by providing a few examples of the desired interaction. This is called "multi-shot" or "few-shot" prompting. By including example <code>user</code> and <code>assistant</code> messages in <code>initialPrompts</code>, you teach the model the expected format and tone.</p>
+            <div class="code-editor-container w-full mb-4">
+                <pre><code id="code-multishot" class="language-js" contenteditable="true">const session = await LanguageModel.create({
+    initialPrompts: [
+        { role: "system", content: "Suggest up to 3 emojis for a comment." },
+        { role: "user", content: "This is amazing!" },
+        { role: "assistant", content: "🎉, ✨, ❤️" },
+        { role: "user", content: "LGTM" },
+        { role: "assistant", content: "👍, ✅" }
+    ]
+});
+const stream = await session.promptStreaming("This is a big improvement!");
+for await (const chunk of stream) {
+    addOutput(chunk);
+}
+</code></pre>
+            </div>
+            <div class="flex items-start justify-between gap-4">
+                <button class="run-btn" data-code="multishot">Run</button>
+                <div class="output-container">
+                    <pre id="output-multishot" class="output-box"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Multi-modal Section -->
+        <div id="multimodal" class="section-card">
+            <h2 class="text-2xl mb-4">9. Multi-modal Input</h2>
+            <p class="mb-4">The API can accept non-text inputs like images. To do this, you specify <code>expectedInputs</code> when creating the session. The <code>content</code> of a prompt can then be an array of different types. Here, we provide a drawing from a canvas element.</p>
+            <div class="mb-4 p-4 border border-slate-300 rounded-lg bg-slate-50 flex flex-col items-center">
+                <p class="self-start mb-2 text-slate-600">This canvas provides an image for the example:</p>
+                <canvas id="mock-canvas" width="200" height="100" class="border border-slate-400 rounded-md"></canvas>
+            </div>
+            <div class="code-editor-container w-full mb-4">
+                <pre><code id="code-multimodal" class="language-js" contenteditable="true">const session = await LanguageModel.create({
+    expectedInputs: [{ type: "image" }]
+});
+
+// The userDrawnImage can be any ImageBitmapSource, like an <img> or <canvas>
+const userDrawnImage = document.getElementById('mock-canvas');
+
+const stream = await session.promptStreaming([{
+    role: "user",
+    content: [
+        { type: "text", value: "Describe the image." },
+        { type: "image", value: userDrawnImage }
+    ]
+}]);
+
+for await (const chunk of stream) {
+    addOutput(chunk);
+}
+</code></pre>
+            </div>
+            <div class="flex items-start justify-between gap-4">
+                <button class="run-btn" data-code="multimodal">Run</button>
+                <div class="output-container">
+                    <pre id="output-multimodal" class="output-box"></pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Structured Output Section -->
+        <div id="structured" class="section-card">
+            <h2 class="text-2xl mb-4">10. Structured Output</h2>
+            <p class="mb-4">You can constrain the model's output to a specific format using <code>responseConstraint</code>. This is incredibly useful for getting predictable data structures, like <code>JSON</code> that matches a schema or text that matches a regular expression. This example uses <code>prompt()</code> for a non-streaming response.</p>
+            <h3 class="text-lg mb-2 font-semibold">JSON Schema</h3>
+            <div class="code-editor-container w-full mb-4">
+                <pre><code id="code-structured-json" class="language-js" contenteditable="true">const schema = {
+    type: "object",
+    properties: {
+        city: { type: "string", description: "The city name." },
+        country: { type: "string", description: "The country name." },
+    },
+    required: ["city", "country"]
+};
+
+const session = await LanguageModel.create();
+const result = await session.prompt(
+    "What is the capital of France?",
+    { responseConstraint: schema }
+);
+
+const parsed = JSON.parse(result);
+addOutput(JSON.stringify(parsed, null, 2));
+</code></pre>
+            </div>
+             <div class="flex items-start justify-between gap-4 mb-6">
+                <button class="run-btn" data-code="structured-json">Run</button>
+                <div class="output-container">
+                    <pre id="output-structured-json" class="output-box"></pre>
+                </div>
+            </div>
+
+            <h3 class="text-lg mb-2 font-semibold">Regular Expression</h3>
+            <div class="code-editor-container w-full mb-4">
+                <pre><code id="code-structured-regex" class="language-js" contenteditable="true">const hexColorRegExp = /^#[0-9a-fA-F]{6}$/;
+
+const session = await LanguageModel.create();
+const result = await session.prompt(
+    "Give me a hex code for a calm blue color.",
+    { responseConstraint: hexColorRegExp }
+);
+
+addOutput(result);
+</code></pre>
+            </div>
+             <div class="flex items-start justify-between gap-4">
+                <button class="run-btn" data-code="structured-regex">Run</button>
+                <div class="output-container">
+                    <pre id="output-structured-regex" class="output-box"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Using a Prefix Section -->
+        <div id="prefix" class="section-card">
+            <h2 class="text-2xl mb-4">11. Using a Prefix</h2>
+            <p class="mb-4">You can guide the model by pre-filling the beginning of its response. By adding <code>prefix: true</code> to the last <code>assistant</code> message, you force the model's output to start with your specified text. This is useful for ensuring a specific format without showing the prefix instruction to the user.</p>
+            <div class="code-editor-container w-full mb-4">
+                <pre><code id="code-prefix" class="language-js" contenteditable="true">const session = await LanguageModel.create();
+
+const stream = await session.promptStreaming([
+  {
+    role: "user",
+    content: "Create a TOML character sheet for a gnome barbarian. Keep it short and give no additional explanations."
+  },
+  {
+    role: "assistant",
+    content: "```toml\n", // The model will continue from here
+    prefix: true
+  }
+]);
+
+for await (const chunk of stream) {
+    addOutput(chunk);
+}
+</code></pre>
+            </div>
+            <div class="flex items-start justify-between gap-4">
+                <button class="run-btn" data-code="prefix">Run</button>
+                <div class="output-container">
+                    <pre id="output-prefix" class="output-box"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Append Section -->
+        <div id="append" class="section-card">
+            <h2 class="text-2xl mb-4">12. Appending Messages with <code>append()</code></h2>
+            <p class="mb-4">The <code>append()</code> method lets you add messages to the session's context without immediately generating a response. This is useful for building up a conversation or providing data incrementally before asking for a final result.</p>
+            <div class="performance-note">
+                <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z" clip-rule="evenodd" /></svg>
+                <div>
+                    <h4 class="font-semibold text-green-800">Performance Note</h4>
+                    <p class="text-green-700">Use <code>session.append()</code> to pre-process large or complex inputs (like images or long documents) before the user submits the final prompt, hiding latency.</p>
+                </div>
+            </div>
+            <div class="code-editor-container w-full mb-4">
+                <pre><code id="code-append" class="language-js" contenteditable="true">const session = await LanguageModel.create();
+
+// Add messages to the session's history without getting a response.
+// Note: append() expects an array of messages.
+await session.append([{role: "user", content: "Fact 1: The sky is blue."}]);
+await session.append([{role: "user", content: "Fact 2: Grass is green."}]);
+
+addOutput("Appended two facts to the session context.\n\nNow, asking for a summary...\n\n");
+
+// Now prompt for a response based on the full context.
+const stream = await session.promptStreaming("Summarize the facts I've given you in a single sentence.");
+
+for await (const chunk of stream) {
+    addOutput(chunk);
+}
+</code></pre>
+            </div>
+            <div class="flex items-start justify-between gap-4">
+                <button class="run-btn" data-code="append">Run</button>
+                <div class="output-container">
+                    <pre id="output-append" class="output-box"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Abort Section -->
+        <div id="abort" class="section-card">
+            <h2 class="text-2xl mb-4">13. Aborting a Prompt</h2>
+            <p class="mb-4">For long-running requests, you can provide an <code>AbortSignal</code>. Calling <code>abort()</code> on the associated <code>AbortController</code> will stop the generation and reject the promise. This gives the user control over expensive or unwanted operations.</p>
+            <div class="code-editor-container w-full mb-4">
+                <pre><code id="code-abort" class="language-js" contenteditable="true">const controller = new AbortController();
+
+// Make the controller globally accessible for the Abort button.
+window.abortExampleController = controller;
+
+const session = await LanguageModel.create();
+const stream = session.promptStreaming(
+    "Tell me the entire history of the universe, in great detail, starting from the big bang.",
+    { signal: controller.signal }
+);
+
+for await (const chunk of stream) {
+    addOutput(chunk);
+}
+</code></pre>
+            </div>
+            <div class="flex items-start justify-between gap-4">
+                <div class="flex gap-4">
+                    <button class="run-btn" data-code="abort">Run</button>
+                    <button id="abort-btn-actual" class="abort-btn" disabled>Abort</button>
+                </div>
+                <div class="output-container">
+                    <pre id="output-abort" class="output-box"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- UI Interaction Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // Draw the canvas image for the multi-modal example
+            const canvas = document.getElementById('mock-canvas');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                // Solid background
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.fillStyle = '#334155';
+                ctx.strokeStyle = '#334155';
+                ctx.lineWidth = 2;
+                
+                // Head
+                ctx.fillRect(80, 20, 40, 30); // Rectangle head
+                
+                // Eyes
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(90, 30, 4, 0, Math.PI * 2); // Left eye
+                ctx.fill();
+                 ctx.beginPath();
+                ctx.arc(110, 30, 4, 0, Math.PI * 2); // Right eye
+                ctx.fill();
+
+                // Antenna
+                ctx.beginPath();
+                ctx.moveTo(100, 20);
+                ctx.lineTo(100, 10);
+                ctx.stroke();
+                ctx.fillStyle = '#ef4444'; // red-500
+                ctx.beginPath();
+                ctx.arc(100, 8, 3, 0, Math.PI * 2); // Antenna light
+                ctx.fill();
+                
+                // Body
+                ctx.fillStyle = '#334155';
+                ctx.fillRect(70, 50, 60, 40);
+                
+                // Arms
+                ctx.fillRect(55, 55, 15, 25);
+                ctx.fillRect(130, 55, 15, 25);
+                
+                // Legs
+                ctx.fillRect(80, 90, 15, 10);
+                ctx.fillRect(105, 90, 15, 10);
+            }
+
+            const statusContainer = document.getElementById('api-status-container');
+            (async () => {
+                if (window.LanguageModel && statusContainer) {
+                    try {
+                        const availability = await LanguageModel.availability();
+                        let statusText = 'Unknown';
+                        let statusColor = 'bg-gray-400';
+                        switch(availability) {
+                            case 'available': statusText = 'Available'; statusColor = 'bg-green-500'; break;
+                            case 'downloadable': statusText = 'Downloadable'; statusColor = 'bg-yellow-500'; break;
+                            case 'unavailable': statusText = 'Unavailable'; statusColor = 'bg-red-500'; break;
+                        }
+                        statusContainer.innerHTML = `<span class="inline-flex items-center font-semibold">API Status on this device: <span class="ml-2 px-3 py-1 text-sm text-white rounded-full ${statusColor}">${statusText}</span></span>`;
+                    } catch (err) {
+                        statusContainer.innerHTML = `<span class="inline-flex items-center font-semibold">API Status on this device: <span class="ml-2 px-3 py-1 text-sm text-white rounded-full bg-red-500">Error Checking</span></span>`;
+                    }
+                } else if (statusContainer) {
+                    statusContainer.innerHTML = `<span class="inline-flex items-center font-semibold">API Status on this device: <span class="ml-2 px-3 py-1 text-sm text-white rounded-full bg-red-500">Unavailable</span></span>`;
+                }
+            })();
+
+            // Check if the real API exists. If not, show a warning and disable buttons.
+            if (!window.LanguageModel) {
+                const warningHeader = document.createElement('div');
+                warningHeader.innerHTML = `
+                    <div class="p-4 mb-8 text-sm text-yellow-800 rounded-lg bg-yellow-50" role="alert">
+                      <span class="font-medium">Warning!</span> Your browser does not appear to support the Web LLM Prompt API, or it is not enabled. The examples on this page will not run. Please try a browser like Chrome Canary with the correct flags enabled.
+                    </div>
+                `;
+                document.querySelector('.container').prepend(warningHeader);
+                document.querySelectorAll('.run-btn, .abort-btn').forEach(btn => {
+                    btn.disabled = true;
+                    btn.style.cursor = 'not-allowed';
+                    btn.style.backgroundColor = '#9ca3af'; // gray-400
+                });
+                return; // Stop further script execution
+            }
+
+
+            document.querySelectorAll('.run-btn').forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const codeId = e.target.dataset.code;
+                    const codeEl = document.getElementById(`code-${codeId}`);
+                    const code = codeEl.innerText; 
+                    
+                    const outputEls = {
+                        default: document.getElementById(`output-${codeId}`),
+                        clone1: document.getElementById('output-cloning-clone1'),
+                        clone2: document.getElementById('output-cloning-clone2'),
+                    }
+
+                    // Clear previous outputs
+                    for (const key in outputEls) {
+                        if (outputEls[key]) outputEls[key].textContent = '';
+                    }
+                    
+                    e.target.disabled = true;
+
+                    let abortBtn = null;
+                    if (codeId === 'abort') {
+                        abortBtn = document.getElementById('abort-btn-actual');
+                        abortBtn.disabled = false;
+                    }
+                    
+                    const isFirstWrite = { default: true, clone1: true, clone2: true };
+                    const addOutput = (text, replace = false, target = 'default') => {
+                        const el = outputEls[target] || outputEls.default;
+                        if (!el) return;
+                        
+                        if (replace || isFirstWrite[target]) {
+                            el.textContent = text;
+                            isFirstWrite[target] = false;
+                        } else {
+                            el.textContent += text;
+                        }
+                    };
+
+                    try {
+                        const userCodeRunner = new Function('addOutput', 'LanguageModel', `return (async () => { ${code} })();`);
+                        await userCodeRunner(addOutput, window.LanguageModel);
+                    } catch (err) {
+                         if (err.name === 'AbortError') {
+                            addOutput("\n\n--- Prompt aborted successfully! ---");
+                         } else {
+                            addOutput(`An error occurred:\n${err.stack}`, true);
+                            console.error(err);
+                        }
+                    } finally {
+                        // Trim trailing whitespace from the final output.
+                        for (const key in outputEls) {
+                            if (outputEls[key] && outputEls[key].textContent) {
+                                outputEls[key].textContent = outputEls[key].textContent.trimEnd();
+                            }
+                        }
+                        e.target.disabled = false;
+                         if (abortBtn) {
+                            abortBtn.disabled = true;
+                        }
+                        window.abortExampleController = null; // Clean up controller
+                    }
+                });
+            });
+            
+            const abortBtn = document.getElementById('abort-btn-actual');
+            if (abortBtn) {
+                abortBtn.addEventListener('click', () => {
+                    if (window.abortExampleController) {
+                        window.abortExampleController.abort();
+                    }
+                });
+            }
+        });
+    </script>
+
+</body>
+</html>
