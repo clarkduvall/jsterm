@@ -204,7 +204,7 @@ addOutput("Session created! Download (if any) is complete.", true);
     topK: 10
 });
 addOutput("Session with custom parameters created!");
-const result = await session.prompt("Tell me a one-sentence joke about a computer.");
+const result = await session.prompt("Tell me a short story about a girl and her dog.");
 addOutput("\n\n" + result);
 </code></pre>
             </div>
@@ -524,7 +524,7 @@ window.abortExampleController = controller;
 
 const session = await LanguageModel.create();
 const stream = session.promptStreaming(
-    "Tell me the entire history of the universe, in great detail, starting from the big bang.",
+    "Tell me the entire history of AI in great detail.",
     { signal: controller.signal }
 );
 
