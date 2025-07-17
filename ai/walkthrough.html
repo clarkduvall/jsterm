@@ -484,22 +484,26 @@ addOutput(result);
 
             <!-- Using a Prefix Section -->
             <div id="prefix" class="section-card">
-                <h2 class="text-2xl mb-4">11. Using a Prefix</h2>
-                <p class="mb-4">Guide the model by pre-filling the start of its response. Add <code>prefix: true</code> to the last <code>assistant</code> message.</p>
+                <h2 class="text-2xl mb-4">11. Using a Prefix (Autocomplete)</h2>
+                <p class="mb-4">Guide the model by pre-filling the start of its response. This is useful for "autocomplete" style features, where the model continues writing from where the user left off.</p>
                 <div class="code-editor-container w-full mb-4">
                     <pre><code id="code-prefix" class="language-js" contenteditable="true">const session = await LanguageModel.create();
 
 const stream = await session.promptStreaming([
   {
     role: "user",
-    content: "Create a TOML character sheet for a gnome barbarian. Keep it short and give no additional explanations."
+    content: "Complete the following sentence:"
   },
   {
     role: "assistant",
-    content: "```toml\n", // The model will continue from here
+    content: "The best way to learn a new programming language is ",
     prefix: true
   }
 ]);
+
+// Display the prefix immediately for a better user experience.
+const prefixText = "The best way to learn a new programming language is ";
+addOutput(prefixText, true);
 
 for await (const chunk of stream) {
     addOutput(chunk);
@@ -519,7 +523,7 @@ for await (const chunk of stream) {
                 <h2 class="text-2xl mb-4">12. Appending Messages with <code>append()</code></h2>
                 <p class="mb-4">Add messages to the session's context with <code>append()</code> without immediately generating a response.</p>
                 <div class="performance-note">
-                    <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z" clip-rule="evenodd" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z" clip-rule="evenodd" /></svg>
                     <div>
                         <h4 class="font-semibold text-green-800">Performance Note</h4>
                         <p class="text-green-700">Use <code>append()</code> to pre-process inputs before the user submits the final prompt, hiding latency.</p>
@@ -956,7 +960,7 @@ addOutput(`Original: ${originalText}\n\nRewritten: ${result}`);
 });
 const originalText = "hey, can you pls look at this when you have a sec? thx";
 const result = await rewriter.rewrite(originalText);
-addOutput(`Original: ${originalText}\n\nRewritten to be formal: ${result}`);
+addOutput(`Original: ${originalText}\n\nRewritten to be more formal: ${result}`);
 </code></pre>
                     </div>
                     <div class="flex items-start justify-between gap-4">
@@ -1096,14 +1100,15 @@ addOutput(`Original: ${originalText}\n\nRewritten to be formal: ${result}`);
                     const button = e.target;
                     const codeId = button.dataset.code;
                     const codeEl = document.getElementById(`code-${codeId}`);
-                    const code = codeEl.innerText; 
                     
                     const outputEls = {
                         default: document.getElementById(`output-${codeId}`),
                         clone1: document.getElementById('output-cloning-clone1'),
                         clone2: document.getElementById('output-cloning-clone2'),
                     };
-                    if (!codeEl || !outputEls.default) return;
+
+                    if (!codeEl || (!outputEls.default && codeId !== 'cloning')) return;
+                    const code = codeEl.innerText;
 
                     for (const key in outputEls) {
                         if (outputEls[key]) outputEls[key].textContent = '';
@@ -1164,3 +1169,4 @@ addOutput(`Original: ${originalText}\n\nRewritten to be formal: ${result}`);
 
 </body>
 </html>
+
