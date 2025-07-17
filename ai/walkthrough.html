@@ -12,7 +12,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Prism.js CSS for syntax highlighting -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" rel="stylesheet" />
     <style>
@@ -23,7 +23,7 @@
         }
         /* Style for the container of the code editor */
         .code-editor-container {
-            font-family: 'JetBrains Mono', monospace;
+            font-family: monospace;
             background-color: #272822; /* Prism Okaidia background */
             border-radius: 0.5rem;
             padding: 1rem;
@@ -45,7 +45,7 @@
         }
 
         .output-box {
-            font-family: 'JetBrains Mono', monospace;
+            font-family: monospace;
             background-color: #f1f5f9; /* slate-100 */
             color: #1e293b; /* slate-800 */
             border-radius: 0.5rem;
@@ -99,7 +99,7 @@
             width: 100%;
         }
         p code, li code {
-            font-family: 'JetBrains Mono', monospace;
+            font-family: monospace;
             background-color: #e2e8f0; /* slate-200 */
             color: #1e293b; /* slate-800 */
             padding: 0.125rem 0.375rem;
@@ -484,26 +484,26 @@ addOutput(result);
 
             <!-- Using a Prefix Section -->
             <div id="prefix" class="section-card">
-                <h2 class="text-2xl mb-4">11. Using a Prefix (Autocomplete)</h2>
-                <p class="mb-4">Guide the model by pre-filling the start of its response. This is useful for "autocomplete" style features, where the model continues writing from where the user left off.</p>
+                <h2 class="text-2xl mb-4">11. Using a Prefix</h2>
+                <p class="mb-4">Guide the model by pre-filling the start of its response. This is useful for code completion, where the model generates code based on a function signature or description.</p>
                 <div class="code-editor-container w-full mb-4">
-                    <pre><code id="code-prefix" class="language-js" contenteditable="true">const session = await LanguageModel.create();
+                    <pre><code id="code-prefix" class="language-js" contenteditable="true">const session = await LanguageModel.create({
+    initialPrompts: [{ 
+        role: "system", 
+        content: "You are a JavaScript code completion assistant. Complete the given function. Do not provide any explanations or surrounding text." 
+    }]
+});
+
+const functionDescription = "A JavaScript function that calculates the factorial of a number.";
+const functionSignature = "function factorial(n) {";
 
 const stream = await session.promptStreaming([
-  {
-    role: "user",
-    content: "Complete the following sentence:"
-  },
-  {
-    role: "assistant",
-    content: "The best way to learn a new programming language is ",
-    prefix: true
-  }
+  { role: "user", content: functionDescription },
+  { role: "assistant", content: functionSignature, prefix: true }
 ]);
 
-// Display the prefix immediately for a better user experience.
-const prefixText = "The best way to learn a new programming language is ";
-addOutput(prefixText, true);
+// Display the prefix immediately
+addOutput(functionSignature, true);
 
 for await (const chunk of stream) {
     addOutput(chunk);
@@ -1169,4 +1169,6 @@ addOutput(`Original: ${originalText}\n\nRewritten to be more formal: ${result}`)
 
 </body>
 </html>
+```
+
 
