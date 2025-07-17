@@ -952,7 +952,7 @@ addOutput(`Original: ${originalText}\n\nRewritten: ${result}`);
                     <p class="mb-4">Guide the revision by specifying a desired <code>tone</code> or <code>length</code>.</p>
                     <div class="code-editor-container w-full mb-4">
                         <pre><code id="code-rewriter-options" class="language-js" contenteditable="true">const rewriter = await Rewriter.create({
-    tone: 'formal'
+    tone: 'more-formal'
 });
 const originalText = "hey, can you pls look at this when you have a sec? thx";
 const result = await rewriter.rewrite(originalText);
