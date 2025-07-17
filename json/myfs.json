@@ -63,7 +63,7 @@
                "type": "exec",
                "contents": "http://clarkduvall.github.io/move/",
                "description": "Small JS library for creating particle systems with HTML canvas."
-            },
+            }
          ]
       },
       {
