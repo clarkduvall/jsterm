@@ -243,7 +243,7 @@ addOutput("Session created! Download (if any) is complete.", true);
     topK: 10
 });
 addOutput("Session with custom parameters created!");
-const result = await session.prompt("Tell me a short story about a girl and her dog.");
+const result = await session.prompt("Tell me a one sentence story about a girl and her dog.");
 addOutput("\n\n" + result);
 </code></pre>
                 </div>
@@ -631,57 +631,10 @@ addOutput(`Translator availability ('${sourceLanguage}' -> '${targetLanguage}'):
                     </div>
                 </div>
             </div>
-
-            <!-- Basic Translation Section -->
-            <div class="section-card">
-                <h2 class="text-2xl mb-4">2. Basic Translation</h2>
-                <p class="mb-4">Create a <code>Translator</code> instance for a language pair. The <code>translate()</code> method returns the translated text.</p>
-                <div class="code-editor-container w-full mb-4">
-                    <pre><code id="code-translate-basic" class="language-js" contenteditable="true">const translator = await Translator.create({
-  sourceLanguage: "en",
-  targetLanguage: "fr"
-});
-
-const result = await translator.translate("Hello, world! How are you today?");
-addOutput(result);
-</code></pre>
-                </div>
-                <div class="flex items-start justify-between gap-4">
-                    <button class="run-btn" data-code="translate-basic">Run</button>
-                    <div class="output-container">
-                        <pre id="output-translate-basic" class="output-box"></pre>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Language Detection Section -->
-            <div class="section-card">
-                <h2 class="text-2xl mb-4">3. Language Detection</h2>
-                <p class="mb-4">The <code>LanguageDetector</code> identifies the language of a text, returning possibilities sorted by confidence.</p>
-                <div class="code-editor-container w-full mb-4">
-                    <pre><code id="code-detect-basic" class="language-js" contenteditable="true">const detector = await LanguageDetector.create();
-const text = "Comment allez-vous aujourd'hui?";
-const results = await detector.detect(text);
-
-let output = `Detected languages for: "${text}"\n\n`;
-for (const result of results) {
-    const confidence = (result.confidence * 100).toFixed(2);
-    output += `${result.detectedLanguage}: ${confidence}% confident\n`;
-}
-addOutput(output.trim());
-</code></pre>
-                </div>
-                <div class="flex items-start justify-between gap-4">
-                    <button class="run-btn" data-code="detect-basic">Run</button>
-                    <div class="output-container">
-                        <pre id="output-detect-basic" class="output-box"></pre>
-                    </div>
-                </div>
-            </div>
             
             <!-- Download Progress Section -->
             <div class="section-card">
-                <h2 class="text-2xl mb-4">4. Monitoring Downloads</h2>
+                <h2 class="text-2xl mb-4">2. Monitoring Downloads</h2>
                 <p class="mb-4">If a language pair isn't available locally, creating a translator may trigger a download. You can show progress with the <code>monitor</code> option.</p>
                 <div class="code-editor-container w-full mb-4">
                     <pre><code id="code-translate-download" class="language-js" contenteditable="true">const translator = await Translator.create({
@@ -704,6 +657,53 @@ addOutput(`\n\nTranslation: ${result}`);
                     <button class="run-btn" data-code="translate-download">Run</button>
                     <div class="output-container">
                         <pre id="output-translate-download" class="output-box"></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Basic Translation Section -->
+            <div class="section-card">
+                <h2 class="text-2xl mb-4">3. Basic Translation</h2>
+                <p class="mb-4">Create a <code>Translator</code> instance for a language pair. The <code>translate()</code> method returns the translated text.</p>
+                <div class="code-editor-container w-full mb-4">
+                    <pre><code id="code-translate-basic" class="language-js" contenteditable="true">const translator = await Translator.create({
+  sourceLanguage: "en",
+  targetLanguage: "fr"
+});
+
+const result = await translator.translate("Hello, world! How are you today?");
+addOutput(result);
+</code></pre>
+                </div>
+                <div class="flex items-start justify-between gap-4">
+                    <button class="run-btn" data-code="translate-basic">Run</button>
+                    <div class="output-container">
+                        <pre id="output-translate-basic" class="output-box"></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Language Detection Section -->
+            <div class="section-card">
+                <h2 class="text-2xl mb-4">4. Language Detection</h2>
+                <p class="mb-4">The <code>LanguageDetector</code> identifies the language of a text, returning possibilities sorted by confidence.</p>
+                <div class="code-editor-container w-full mb-4">
+                    <pre><code id="code-detect-basic" class="language-js" contenteditable="true">const detector = await LanguageDetector.create();
+const text = "Comment allez-vous aujourd'hui?";
+const results = await detector.detect(text);
+
+let output = `Detected languages for: "${text}"\n\n`;
+for (const result of results) {
+    const confidence = (result.confidence * 100).toFixed(2);
+    output += `${result.detectedLanguage}: ${confidence}% confident\n`;
+}
+addOutput(output.trim());
+</code></pre>
+                </div>
+                <div class="flex items-start justify-between gap-4">
+                    <button class="run-btn" data-code="detect-basic">Run</button>
+                    <div class="output-container">
+                        <pre id="output-detect-basic" class="output-box"></pre>
                     </div>
                 </div>
             </div>
@@ -850,6 +850,7 @@ addOutput(result);
                 <!-- Writer Availability -->
                 <div class="section-card">
                     <h3 class="text-2xl mb-4">1. Checking Writer Availability</h3>
+                    <p class="mb-4">Before using the API, you should check if it's available in the user's browser.</p>
                     <div class="code-editor-container w-full mb-4">
                         <pre><code id="code-writer-availability" class="language-js" contenteditable="true">const availability = await Writer.availability();
 addOutput(`Writer availability: ${availability}`);
@@ -913,6 +914,7 @@ for await (const chunk of stream) {
                 <!-- Rewriter Availability -->
                 <div class="section-card">
                     <h3 class="text-2xl mb-4">1. Checking Rewriter Availability</h3>
+                     <p class="mb-4">Just like the other APIs, it's a good practice to check for availability first.</p>
                     <div class="code-editor-container w-full mb-4">
                         <pre><code id="code-rewriter-availability" class="language-js" contenteditable="true">const availability = await Rewriter.availability();
 addOutput(`Rewriter availability: ${availability}`);
