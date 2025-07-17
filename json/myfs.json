@@ -20,7 +20,7 @@
                "name": "WebAI",
                "type": "exec",
                "contents": "ai/walkthrough.html",
-               "description": "Walkthroughs of built-in AI APIs available in Chrome RIGHT NOW! Part of what I work on at Google."
+               "description": "Demos of built-in AI APIs available in Chrome RIGHT NOW! Part of what I work on at Google."
             },
             {
                "name": "GitHub",
