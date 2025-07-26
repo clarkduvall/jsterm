@@ -149,11 +149,11 @@
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-1GFV9V1J8K"></script>
     <script>
-     window.dataLayer = window.dataLayer || [];
-     function gtag(){dataLayer.push(arguments);}
-     gtag('js', new Date());
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
     
-     gtag('config', 'G-1GFV9V1J8K');
+      gtag('config', 'G-1GFV9V1J8K');
     </script>
 </head>
 <body class="antialiased">
@@ -220,11 +220,15 @@ addOutput(`Model availability: ${availability}`);
         monitor.addEventListener("downloadprogress", (e) => {
              // e.loaded is a value between 0 and 1
             const percent = Math.round(e.loaded * 100);
-            addOutput(`Downloading... ${percent}%`, true);
+            if (percent < 100) {
+                addOutput(`Downloading... ${percent}%`, true);
+            } else {
+                addOutput(`Download complete. Optimizing model, this may take a bit...`, true);
+            }
         });
     }
 });
-addOutput("Session created! Download (if any) is complete.", true);
+addOutput("Session created and ready!", true);
 </code></pre>
                 </div>
                 <div class="flex items-start justify-between gap-4">
@@ -1178,6 +1182,3 @@ addOutput(`Original: ${originalText}\n\nRewritten to be more formal: ${result}`)
 
 </body>
 </html>
-```
-
-
