@@ -338,9 +338,9 @@ for await (const chunk of stream) {
                 <div class="code-editor-container w-full mb-4">
                     <pre><code id="code-stateful" class="language-js" contenteditable="true">const session = await LanguageModel.create();
 
-addOutput("User: Tell me a joke about cats.\n\n");
+addOutput("User: Tell me a one liner about cats.\n\n");
 addOutput("Assistant: ");
-const stream1 = session.promptStreaming("Tell me a joke about cats.");
+const stream1 = session.promptStreaming("Tell me a one liner about cats.");
 for await (const chunk of stream1) {
     addOutput(chunk);
 }
