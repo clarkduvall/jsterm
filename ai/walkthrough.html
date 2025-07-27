@@ -331,9 +331,39 @@ for await (const chunk of stream) {
                 </div>
             </div>
 
+            <!-- Stateful Conversation Section -->
+            <div id="stateful" class="section-card">
+                <h2 class="text-2xl mb-4">7. Stateful Conversations</h2>
+                <p class="mb-4">Sessions are stateful, meaning they remember the context of the conversation. You can ask follow-up questions, and the model will use the previous prompts and responses to inform its new answer.</p>
+                <div class="code-editor-container w-full mb-4">
+                    <pre><code id="code-stateful" class="language-js" contenteditable="true">const session = await LanguageModel.create();
+
+addOutput("User: Tell me a joke about cats.\n\n");
+addOutput("Assistant: ");
+const stream1 = session.promptStreaming("Tell me a joke about cats.");
+for await (const chunk of stream1) {
+    addOutput(chunk);
+}
+
+addOutput("\n\nUser: Tell me another one.\n\n");
+addOutput("Assistant: ");
+const stream2 = session.promptStreaming("Tell me another one.");
+for await (const chunk of stream2) {
+    addOutput(chunk);
+}
+</code></pre>
+                </div>
+                <div class="flex items-start justify-between gap-4">
+                    <button class="run-btn" data-code="stateful">Run</button>
+                    <div class="output-container">
+                        <pre id="output-stateful" class="output-box"></pre>
+                    </div>
+                </div>
+            </div>
+
             <!-- Cloning a Session Section -->
             <div id="cloning" class="section-card">
-                <h2 class="text-2xl mb-4">7. Cloning a Session</h2>
+                <h2 class="text-2xl mb-4">8. Cloning a Session</h2>
                 <p class="mb-4">Use <code>session.clone()</code> to start a new, independent conversation from the same base state.</p>
                 <div class="performance-note">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z" clip-rule="evenodd" /></svg>
@@ -379,7 +409,7 @@ for await (const chunk of stream2) {
 
             <!-- Multi-shot Prompting Section -->
             <div id="multishot" class="section-card">
-                <h2 class="text-2xl mb-4">8. Multi-shot Prompting</h2>
+                <h2 class="text-2xl mb-4">9. Multi-shot Prompting</h2>
                 <p class="mb-4">Guide the model by providing examples ("shots") of the desired interaction in <code>initialPrompts</code>.</p>
                 <div class="code-editor-container w-full mb-4">
                     <pre><code id="code-multishot" class="language-js" contenteditable="true">const session = await LanguageModel.create({
@@ -407,7 +437,7 @@ for await (const chunk of stream) {
 
             <!-- Multi-modal Section -->
             <div id="multimodal" class="section-card">
-                <h2 class="text-2xl mb-4">9. Multi-modal Input</h2>
+                <h2 class="text-2xl mb-4">10. Multi-modal Input</h2>
                 <p class="mb-4">Pass non-text inputs like images by specifying <code>expectedInputs</code> and providing an array of content types.</p>
                 <div class="mb-4 p-4 border border-slate-300 rounded-lg bg-slate-50 flex flex-col items-center">
                     <p class="self-start mb-2 text-slate-600">This canvas provides an image for the example:</p>
@@ -444,7 +474,7 @@ for await (const chunk of stream) {
             
             <!-- Structured Output Section -->
             <div id="structured" class="section-card">
-                <h2 class="text-2xl mb-4">10. Structured Output</h2>
+                <h2 class="text-2xl mb-4">11. Structured Output</h2>
                 <p class="mb-4">Constrain the model's output to a format like JSON or text matching a regular expression using <code>responseConstraint</code>.</p>
                 <h3 class="text-lg mb-2 font-semibold">JSON Schema</h3>
                 <div class="code-editor-container w-full mb-4">
@@ -497,7 +527,7 @@ addOutput(result);
 
             <!-- Using a Prefix Section -->
             <div id="prefix" class="section-card">
-                <h2 class="text-2xl mb-4">11. Using a Prefix</h2>
+                <h2 class="text-2xl mb-4">12. Using a Prefix</h2>
                 <p class="mb-4">Guide the model by pre-filling the start of its response. This is useful for code completion, where the model generates code based on a function signature or description.</p>
                 <div class="code-editor-container w-full mb-4">
                     <pre><code id="code-prefix" class="language-js" contenteditable="true">const session = await LanguageModel.create({
@@ -533,7 +563,7 @@ for await (const chunk of stream) {
 
             <!-- Append Section -->
             <div id="append" class="section-card">
-                <h2 class="text-2xl mb-4">12. Appending Messages with <code>append()</code></h2>
+                <h2 class="text-2xl mb-4">13. Appending Messages with <code>append()</code></h2>
                 <p class="mb-4">Add messages to the session's context with <code>append()</code> without immediately generating a response.</p>
                 <div class="performance-note">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z" clip-rule="evenodd" /></svg>
@@ -569,7 +599,7 @@ for await (const chunk of stream) {
 
             <!-- Abort Section -->
             <div id="abort" class="section-card">
-                <h2 class="text-2xl mb-4">13. Aborting a Prompt</h2>
+                <h2 class="text-2xl mb-4">14. Aborting a Prompt</h2>
                 <p class="mb-4">Provide an <code>AbortSignal</code> to stop a long-running request.</p>
                 <div class="code-editor-container w-full mb-4">
                     <pre><code id="code-abort" class="language-js" contenteditable="true">const controller = new AbortController();
