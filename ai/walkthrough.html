@@ -448,7 +448,7 @@ for await (const chunk of stream) {
     expectedInputs: [{ type: "image" }]
 });
 
-// The userDrawnImage can be any ImageBitmapSource, like an <img> or <canvas>
+// The userDrawnImage can be any ImageBitmapSource, like an &lt;img> or &lt;canvas>
 const userDrawnImage = document.getElementById('mock-canvas');
 
 const stream = await session.promptStreaming([{
