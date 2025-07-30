@@ -1085,6 +1085,8 @@ addOutput(`Original: ${originalText}\n\nRewritten to be more formal: ${result}`)
 
             // --- AVAILABILITY CHECKERS ---
             (async () => {
+                const isAndroid = /android/i.test(navigator.userAgent);
+                
                 // Prompt API
                 const promptStatusContainer = document.getElementById('prompt-api-status-container');
                 if (window.LanguageModel && promptStatusContainer) {
@@ -1105,7 +1107,12 @@ addOutput(`Original: ${originalText}\n\nRewritten to be more formal: ${result}`)
 
                 // Writer & Rewriter APIs
                 const writerStatusContainer = document.getElementById('writer-rewriter-api-status-container');
-                if (window.Writer && window.Rewriter && writerStatusContainer) {
+                if (isAndroid) {
+                    if (writerStatusContainer) {
+                        writerStatusContainer.innerHTML = `<div class="font-semibold text-orange-700">Writer & Rewriter APIs are not available on Android devices.</div>`;
+                    }
+                    document.querySelectorAll('#writer-rewriter-api-content .run-btn').forEach(btn => btn.disabled = true);
+                } else if (window.Writer && window.Rewriter && writerStatusContainer) {
                      try {
                         const [writerAv, rewriterAv] = await Promise.all([
                             Writer.availability(),
