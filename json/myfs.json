@@ -17,10 +17,16 @@
          "type": "dir",
          "contents": [
             {
-               "name": "WebAI",
+               "name": "WebAIWalkthrough",
                "type": "exec",
                "contents": "ai/walkthrough.html",
                "description": "Demos of built-in AI APIs available in Chrome RIGHT NOW! Part of what I work on at Google."
+            },
+            {
+               "name": "WebAIExperiments",
+               "type": "exec",
+               "contents": "ai/",
+               "description": "Experiments built using the built-in AI APIs available in Chrome."
             },
             {
                "name": "GitHub",
