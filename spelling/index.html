@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+<head>
+  <title>Spelling</title>
+  <meta charset="utf-8">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background: black;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      font-family: sans-serif;
+    }
+    #word {
+      font-size: 8rem;
+      text-transform: uppercase;
+    }
+  </style>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1GFV9V1J8K"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1GFV9V1J8K');
+  </script>
+</head>
+<body>
+  <div id="word"></div>
+  <script>
+    const wordEl = document.getElementById('word');
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+    } else {
+      wordEl.textContent = 'Speech recognition not supported.';
+    }
+
+    let listening = false;
+    document.addEventListener('keydown', e => {
+      if (e.code === 'Space' && !listening && recognition) {
+        e.preventDefault();
+        listening = true;
+        wordEl.textContent = '';
+        recognition.start();
+      }
+    });
+
+    document.addEventListener('keyup', e => {
+      if (e.code === 'Space' && listening && recognition) {
+        e.preventDefault();
+        listening = false;
+        recognition.stop();
+      }
+    });
+
+    document.addEventListener('pointerdown', e => {
+      if (!listening && recognition && e.button === 0) {
+        e.preventDefault();
+        listening = true;
+        wordEl.textContent = '';
+        recognition.start();
+      }
+    });
+
+    document.addEventListener('pointerup', e => {
+      if (listening && recognition && e.button === 0) {
+        e.preventDefault();
+        listening = false;
+        recognition.stop();
+      }
+    });
+
+    if (recognition) {
+      recognition.addEventListener('result', e => {
+        const transcript = e.results[0][0].transcript.trim();
+        const word = transcript.split(/\s+/)[0];
+        wordEl.textContent = word;
+      });
+    }
+  </script>
+</body>
+</html>
