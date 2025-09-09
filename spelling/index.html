@@ -85,7 +85,7 @@
       recognition.addEventListener('result', e => {
         const transcript = e.results[0][0].transcript.trim();
         const word = transcript.split(/\s+/)[0];
-        wordEl.textContent = word;
+        wordEl.textContent = word.toLowerCase();
       });
     }
   </script>
