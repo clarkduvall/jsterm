@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Upload + Download Demo</title>
+    <style>
+      :root {
+        --bg: #f7f7f8;
+        --card: #ffffff;
+        --text: #1f2328;
+        --muted: #57606a;
+        --accent: #0b6bcb;
+        --accent-strong: #084c92;
+        --border: #d0d7de;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, serif;
+        background: linear-gradient(160deg, #f0f4ff 0%, var(--bg) 45%, #f9f3e8 100%);
+        color: var(--text);
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+      .card {
+        width: min(720px, 100%);
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow:
+          0 20px 40px rgba(15, 23, 42, 0.08),
+          0 2px 6px rgba(15, 23, 42, 0.06);
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(28px, 4vw, 36px);
+        letter-spacing: 0.2px;
+      }
+      p.lede {
+        margin: 0 0 20px;
+        color: var(--muted);
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        margin: 18px 0 26px;
+      }
+      button, .download {
+        appearance: none;
+        border: 1px solid var(--accent);
+        background: var(--accent);
+        color: white;
+        padding: 10px 16px;
+        border-radius: 999px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: transform 140ms ease, background-color 140ms ease, border-color 140ms ease;
+      }
+      button:hover, .download:hover {
+        background: var(--accent-strong);
+        border-color: var(--accent-strong);
+        transform: translateY(-1px);
+      }
+      input[type="file"] {
+        padding: 8px;
+        border: 1px dashed var(--border);
+        border-radius: 12px;
+        background: #fbfdff;
+        width: min(320px, 100%);
+      }
+      .output {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        background: #0d1117;
+        color: #e6edf3;
+        min-height: 120px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      }
+      .label {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+      .hint {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>Upload + Download</h1>
+      <p class="lede">Download creates a file that says cat. Upload reads a text file and shows it below.</p>
+
+      <div class="row">
+        <button id="download-btn" type="button">Download cat.txt</button>
+      </div>
+
+      <form id="upload-form">
+        <div class="row">
+          <input id="file-input" name="file" type="file" accept=".txt,text/plain" required />
+          <button type="submit">Upload and display</button>
+        </div>
+      </form>
+
+      <div class="label">Uploaded content</div>
+      <div id="output" class="output">No file uploaded yet.</div>
+      <div class="hint">Tip: create a .txt file, upload it, and the contents will appear here.</div>
+    </main>
+
+    <script>
+      const form = document.getElementById('upload-form');
+      const input = document.getElementById('file-input');
+      const output = document.getElementById('output');
+      const downloadBtn = document.getElementById('download-btn');
+
+      downloadBtn.addEventListener('click', () => {
+        const blob = new Blob(['cat\n'], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'cat.txt';
+        link.click();
+        URL.revokeObjectURL(url);
+      });
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!input.files.length) return;
+
+        output.textContent = 'Reading file...';
+
+        try {
+          const file = input.files[0];
+          const content = await file.text();
+          output.textContent = content || '(empty file)';
+        } catch (err) {
+          output.textContent = 'Read failed: ' + err.message;
+        }
+      });
+    </script>
+  </body>
+</html>
