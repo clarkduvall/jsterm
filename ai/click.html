@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Click Tracker</title>
+    <style>
+        body { height: 100vh; margin: 0; cursor: crosshair; }
+        .click-dot {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: red;
+            border-radius: 50%;
+            transform: translate(-50%, -50%); /* Center the dot */
+        }
+    </style>
+</head>
+<body>
+    <script>
+        document.addEventListener('click', function(e) {
+            let dot = document.createElement('div');
+            dot.className = 'click-dot';
+            dot.style.left = e.pageX + 'px';
+            dot.style.top = e.pageY + 'px';
+            document.body.appendChild(dot);
+        });
+    </script>
+</body>
+</html>
